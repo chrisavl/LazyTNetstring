@@ -36,7 +36,7 @@ describe Parser do
     context 'for unknown key' do
       let(:key) { 'unknown' }
       it 'rejects key access' do
-        expect { should }.to raise_error
+        expect { subject }.to raise_error(KeyNotFoundError)
       end
     end
     
@@ -51,10 +51,15 @@ describe Parser do
       its(:offset) { should == 35 }
       its(:length) { should == 4 }
     end
+    
+    # context 'for key in nested hash' do
+    #   let(:key) { 'subkey1' }
+    #   it 'rejects key access' do
+    #     expect { s }.to raise_error
+    #   end
+    # end
   end
   
-  # find_key where value equals key name
-  # find_key omits sub-hashes
   # find_key can find beyond nested hashes
   
   describe '#next_term' do

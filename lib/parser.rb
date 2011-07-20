@@ -1,3 +1,6 @@
+class KeyNotFoundError < Exception
+end
+
 class Parser
   
   attr_reader :data, :offset, :length
@@ -20,7 +23,6 @@ class Parser
     dump[key]
   end
   
-  # 
   def find_key(key)
     offset = hash_data.index(':') + 1
     term_type = :first
@@ -29,9 +31,6 @@ class Parser
       term = next_term(offset)
       term_type = (term_type == :key ? :value : :key)
       
-      if term.length == 0
-        raise "Key #{key.inspect} not found"
-      end
       if key == term.value && term_type == :key
         return term
       end
@@ -44,9 +43,11 @@ class Parser
   end
   
   def next_term(offset)
-    colon_index = hash_data[offset..(-1 - offset)].index(':') + offset
-    key_offset = colon_index + 1
-    key_length = hash_data[offset..colon_index].to_i
+    colon_index = hash_data[offset..(-1 - offset)].index(':')
+    raise KeyNotFoundError, "Key not found" unless colon_index
+
+    key_offset = offset + colon_index + 1
+    key_length = hash_data[offset..(key_offset - 1)].to_i
     Term.new(hash_data, key_offset, key_length)
   end
   
