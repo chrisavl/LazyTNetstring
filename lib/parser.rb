@@ -22,17 +22,17 @@ class Parser
   
   # 
   def find_key(key)
-    key_offset, key_length = next_term(0)
+    key_offset, key_length = foobar(0)
     
     loop do
       offset = key_length.to_s.length + 1
-      key_offset, key_length = next_term(offset)
+      key_offset, key_length = foobar(offset)
     
       next_key = hash_data[key_offset..(key_offset + key_length - 1)]
-puts "key=#{key}, key_length=#{key_length}, next_key=#{next_key}, offset=#{offset}, key_offset=#{key_offset}"
+#puts "key=#{key}, key_length=#{key_length}, next_key=#{next_key}, offset=#{offset}, key_offset=#{key_offset}"
 
       if key == next_key
-        return Location.new(key_offset, key_length)
+        return Term.new(key_offset, key_length)
       end
       offset = key_offset + key_length + 1
       if key_length == 0
@@ -45,7 +45,8 @@ puts "key=#{key}, key_length=#{key_length}, next_key=#{next_key}, offset=#{offse
     @data[@offset..@length]
   end
   
-  def next_term(offset)
+  # TODO remove this method
+  def foobar(offset)
     colon_index = hash_data[offset..(-1 - offset)].index(':') + offset
     key_offset = colon_index + 1
     key_length = hash_data[offset..colon_index].to_i
@@ -53,6 +54,13 @@ puts "key=#{key}, key_length=#{key_length}, next_key=#{next_key}, offset=#{offse
     [key_offset, key_length]
   end
 
+  def next_term(offset)
+    colon_index = hash_data[offset..(-1 - offset)].index(':') + offset
+    key_offset = colon_index + 1
+    key_length = hash_data[offset..colon_index].to_i
+    Term.new(key_offset, key_length)
+  end
+  
   private
   
   def dump
@@ -60,12 +68,16 @@ puts "key=#{key}, key_length=#{key_length}, next_key=#{next_key}, offset=#{offse
   end
 end
 
-class Location
+class Term
   attr_accessor :offset, :length
   
   def initialize(offset, length)
     @offset = offset
     @length = length
+  end
+  
+  def value(data)
+    data[@offset..(@offset + @length - 1)]
   end
 end
 
