@@ -28,9 +28,15 @@ describe Parser do
   
   describe '#find_key' do
     subject { Parser.new(data).find_key(key) }
-    let(:data) { TNetstring.dump({'key1' => 'value1', 'key2' => 'key3', 'key3' => {'subkey1' => 1, 'subkey2' => 2}}) }
+    let(:data) { 
+      TNetstring.dump({'key1' => 'value1', 
+                       'key2' => 'key3', 
+                       'key3' => {'subkey1' => 1, 'subkey2' => 2},
+                       'key4' => 'value4'
+                      })
+    }
 =begin
-69:4:key1,6:value1,4:key2,4:key3,4:key3,28:7:subkey1,1:1#7:subkey2,1:2#}}
+85:4:key1,6:value1,4:key2,4:key3,4:key3,28:7:subkey1,1:1#7:subkey2,1:2#}4:key4,6:value4,}
 =end
 
     context 'for unknown key' do
@@ -43,30 +49,35 @@ describe Parser do
     context 'for known key' do
       let(:key) { 'key2' }
       its(:offset) { should == 21 }
-      its(:length) { should == key.length }
     end
     
     context 'where value equals key name' do
       let(:key) { 'key3' }
       its(:offset) { should == 35 }
-      its(:length) { should == 4 }
     end
     
-    # context 'for key in nested hash' do
-    #   let(:key) { 'subkey1' }
-    #   it 'rejects key access' do
-    #     expect { s }.to raise_error
-    #   end
-    # end
+    context 'for key in nested hash' do
+      let(:key) { 'subkey1' }
+      it 'rejects key access' do
+        expect { s }.to raise_error
+      end
+    end
+    
+    context 'for key after nested hash' do
+      let(:key) { 'key4' }
+      its(:offset) { should == 74 }
+    end
   end
   
   # find_key can find beyond nested hashes
   
   describe '#next_term' do
     subject { Parser.new(data).next_term(offset) }
-    let(:data) { TNetstring.dump({'key_longer_than_10_chars' => 'value1', 'key2' => {'subkey1' => 1, 'subkey2' => 2}}) }
+    let(:data) { TNetstring.dump({'key_longer_than_10_chars' => 'value1', 
+                                  'key2' => {'subkey1' => 1, 'subkey2' => 2},
+                                  'key3' => 'foobar'}) }
 =begin
-76:24:key_longer_than_10_chars,6:value1,4:key2,28:7:subkey1,1:1#7:subkey2,1:2#}}
+92:24:key_longer_than_10_chars,6:value1,4:key2,28:7:subkey1,1:1#7:subkey2,1:2#}4:key3,6:foobar,}
 =end
     
     context 'for first term' do
@@ -85,6 +96,12 @@ describe Parser do
     context 'for third term' do
       let(:offset) { 40 }
       its(:offset) { 42 }
+      its(:length) { 4 }
+    end
+    
+    context 'for term after nested hash' do
+      let(:offset) { 79 }
+      its(:offset) { 81 }
       its(:length) { 4 }
     end
   end

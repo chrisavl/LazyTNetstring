@@ -30,7 +30,6 @@ class Parser
     loop do
       term = next_term(offset)
       term_type = (term_type == :key ? :value : :key)
-      
       if key == term.value && term_type == :key
         return term
       end
@@ -43,7 +42,7 @@ class Parser
   end
   
   def next_term(offset)
-    colon_index = hash_data[offset..(-1 - offset)].index(':')
+    colon_index = hash_data[offset..-1].index(':')
     raise KeyNotFoundError, "Key not found" unless colon_index
 
     key_offset = offset + colon_index + 1
