@@ -23,13 +23,16 @@ class Parser
   # 
   def find_key(key)
     offset = hash_data.index(':') + 1
+    term_type = :first
     
     loop do
       term = next_term(offset)
+      term_type = (term_type == :key ? :value : :key)
+      
       if term.length == 0
         raise "Key #{key.inspect} not found"
       end
-      if key == term.value
+      if key == term.value && term_type == :key
         return term
       end
       offset = term.offset + term.length + 1

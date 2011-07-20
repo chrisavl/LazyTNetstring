@@ -28,9 +28,9 @@ describe Parser do
   
   describe '#find_key' do
     subject { Parser.new(data).find_key(key) }
-    let(:data) { TNetstring.dump({'key1' => 'value1', 'key2' => {'subkey1' => 1, 'subkey2' => 2}}) }
+    let(:data) { TNetstring.dump({'key1' => 'value1', 'key2' => 'key3', 'key3' => {'subkey1' => 1, 'subkey2' => 2}}) }
 =begin
-55:4:key1,6:value1,4:key2,28:7:subkey1,1:1#7:subkey2,1:2#}}
+69:4:key1,6:value1,4:key2,4:key3,4:key3,28:7:subkey1,1:1#7:subkey2,1:2#}}
 =end
 
     context 'for unknown key' do
@@ -42,9 +42,14 @@ describe Parser do
     
     context 'for known key' do
       let(:key) { 'key2' }
-      it { should be_a Term }
       its(:offset) { should == 21 }
       its(:length) { should == key.length }
+    end
+    
+    context 'where value equals key name' do
+      let(:key) { 'key3' }
+      its(:offset) { should == 35 }
+      its(:length) { should == 4 }
     end
   end
   
