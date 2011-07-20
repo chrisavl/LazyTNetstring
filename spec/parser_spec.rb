@@ -69,8 +69,6 @@ describe Parser do
     end
   end
   
-  # find_key can find beyond nested hashes
-  
   describe '#next_term' do
     subject { Parser.new(data).next_term(offset) }
     let(:data) { TNetstring.dump({'key_longer_than_10_chars' => 'value1', 
@@ -122,12 +120,13 @@ describe Parser do
       it { should == 'bar' }
     end
     
-    # context 'for nested hash' do
-    #   let(:data) { TNetstring.dump({'outer' => { 'inner' => 'value'} }) }
-    #   let(:key) { 'outer' }
-    #   
-    #   it { should be_an Parser }
-    # end
+    context 'for nested hash' do
+      let(:data) { TNetstring.dump({'outer' => { 'inner' => 'value'} }) }
+      let(:key) { 'outer' }
+     
+      it { should be_an Parser }
+      its(:hash_data) { should == TNetstring.dump({ 'inner' => 'value'}) }
+    end
     
     # provides correct data type of leaf elements
   end

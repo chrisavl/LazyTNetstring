@@ -13,32 +13,38 @@ class Parser
   end
   
   def [](key)
-    found = find_key(key)
-    # if is_leaf?(found)
-    #   return find_value_of(found)
-    # else
-    #   return create_sub_parser(found)
-    # end
-    raise "Key #{key.inspect} not found" unless dump[key]
-    dump[key]
+    found_key = find_key(key)
+    found_value = term_following found_key
+    if found_value.is_leaf?
+      found_value.value
+    else
+      node_offset = found_value.offset - found_value.length.to_s.length - 1
+      node_length = found_value.length.to_s.length + 1 + found_value.length
+      Parser.new(data, node_offset, node_length)
+    end
   end
   
   def find_key(key)
     offset = hash_data.index(':') + 1
-    term_type = :first
+    term = next_term(offset)
+    term_type = :key
     
     loop do
-      term = next_term(offset)
-      term_type = (term_type == :key ? :value : :key)
       if key == term.value && term_type == :key
         return term
       end
       offset = term.offset + term.length + 1
+      term = term_following term
+      term_type = (term_type == :key ? :value : :key)
     end
   end
   
   def hash_data
-    @data[@offset..@length]
+    @data[@offset..(@offset + @length)]
+  end
+  
+  def term_following(term)
+    next_term(term.offset + term.length + 1)
   end
   
   def next_term(offset)
@@ -70,9 +76,13 @@ class Term
   def value
     @data[@offset..(@offset + @length - 1)]
   end
+
+  def is_leaf?
+    @data[@offset + @length] != "}"
+  end
   
   def to_s
-    "(offset=#{@offset}, length=#{@length}) => #{value}"
+    "(offset=#{@offset}, length=#{@length}) => #{self.value.inspect} [#{self.is_leaf? ? 'leaf' : 'node'}]"
   end
 end
 
