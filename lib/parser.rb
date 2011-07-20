@@ -22,29 +22,22 @@ class Parser
   
   # 
   def find_key(key)
-    offset = 0
-    colon_index = hash_data[(0+offset)..(-1-offset)].index(':')
-    data_length = hash_data[(0+offset)..(colon_index-offset)].to_i
+    key_offset, key_length = next_term(0)
     
     loop do
-      offset = data_length.to_s.length + 1
-      colon_index = @data[(@offset+offset)..(@length-offset)].index(':')
-      data_length = @data[@offset+offset..colon_index-offset].to_i
+      offset = key_length.to_s.length + 1
+      key_offset, key_length = next_term(offset)
     
-      key_start = @offset+offset+colon_index.to_s.length+1
-      next_key = @data[key_start..(key_start+data_length-1)]
+      next_key = hash_data[key_offset..(key_offset + key_length - 1)]
+puts "key=#{key}, key_length=#{key_length}, next_key=#{next_key}, offset=#{offset}, key_offset=#{key_offset}"
 
       if key == next_key
-        l = Location.new
-        l.offset = key_start
-        l.length = data_length
-        return l
+        return Location.new(key_offset, key_length)
       end
-      offset = key_start + data_length
-      if data_length == 0
+      offset = key_offset + key_length + 1
+      if key_length == 0
         raise "Key #{key.inspect} not found"
       end
-# puts "key=#{key}, data_length=#{data_length}, next_key=#{next_key}, offset=#{offset}, key_start=#{key_start}"
     end
   end
   
@@ -52,6 +45,14 @@ class Parser
     @data[@offset..@length]
   end
   
+  def next_term(offset)
+    colon_index = hash_data[offset..(-1 - offset)].index(':') + offset
+    key_offset = colon_index + 1
+    key_length = hash_data[offset..colon_index].to_i
+# puts "offset=#{offset}, colon_index=#{colon_index}, key_offset=#{key_offset}, key_length=#{key_length} => hash_data[#{key_offset}..#{key_length}]=#{hash_data[key_offset..key_length]}"
+    [key_offset, key_length]
+  end
+
   private
   
   def dump
@@ -61,5 +62,10 @@ end
 
 class Location
   attr_accessor :offset, :length
+  
+  def initialize(offset, length)
+    @offset = offset
+    @length = length
+  end
 end
 

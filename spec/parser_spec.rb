@@ -45,6 +45,10 @@ describe Parser do
     end
   end
   
+  # find_key where value equals key name
+  # find_key omits sub-hashes
+  # find_key can find beyond nested hashes
+  
   describe '#[]' do
     subject { Parser.new(data)[key]}
     let(:key) { 'foo' }
@@ -67,6 +71,8 @@ describe Parser do
     #   
     #   it { should be_an Parser }
     # end
+    
+    # provides correct data type of leaf elements
   end
   
 end
