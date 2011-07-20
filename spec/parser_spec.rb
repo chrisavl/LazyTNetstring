@@ -29,7 +29,10 @@ describe Parser do
   describe '#find_key' do
     subject { Parser.new(data).find_key(key) }
     let(:data) { TNetstring.dump({'key1' => 'value1', 'key2' => {'subkey1' => 1, 'subkey2' => 2}}) }
-    
+=begin
+55:4:key1,6:value1,4:key2,28:7:subkey1,1:1#7:subkey2,1:2#}}
+=end
+
     context 'for unknown key' do
       let(:key) { 'unknown' }
       it 'rejects key access' do
@@ -38,9 +41,9 @@ describe Parser do
     end
     
     context 'for known key' do
-      let(:key) { 'key1' }
+      let(:key) { 'key2' }
       it { should be_a Term }
-      its(:offset) { should == 5 }
+      its(:offset) { should == 21 }
       its(:length) { should == key.length }
     end
   end
@@ -107,7 +110,7 @@ end
 describe Term do
   
   describe '#value' do
-    subject { Term.new(2, 3).value('01234567489') }
+    subject { Term.new('01234567489', 2, 3).value }
     it { should == '234' }
   end
 end

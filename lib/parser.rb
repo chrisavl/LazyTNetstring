@@ -22,22 +22,17 @@ class Parser
   
   # 
   def find_key(key)
-    key_offset, key_length = foobar(0)
+    offset = hash_data.index(':') + 1
     
     loop do
-      offset = key_length.to_s.length + 1
-      key_offset, key_length = foobar(offset)
-    
-      next_key = hash_data[key_offset..(key_offset + key_length - 1)]
-#puts "key=#{key}, key_length=#{key_length}, next_key=#{next_key}, offset=#{offset}, key_offset=#{key_offset}"
-
-      if key == next_key
-        return Term.new(key_offset, key_length)
-      end
-      offset = key_offset + key_length + 1
-      if key_length == 0
+      term = next_term(offset)
+      if term.length == 0
         raise "Key #{key.inspect} not found"
       end
+      if key == term.value
+        return term
+      end
+      offset = term.offset + term.length + 1
     end
   end
   
@@ -45,24 +40,16 @@ class Parser
     @data[@offset..@length]
   end
   
-  # TODO remove this method
-  def foobar(offset)
-    colon_index = hash_data[offset..(-1 - offset)].index(':') + offset
-    key_offset = colon_index + 1
-    key_length = hash_data[offset..colon_index].to_i
-# puts "offset=#{offset}, colon_index=#{colon_index}, key_offset=#{key_offset}, key_length=#{key_length} => hash_data[#{key_offset}..#{key_length}]=#{hash_data[key_offset..key_length]}"
-    [key_offset, key_length]
-  end
-
   def next_term(offset)
     colon_index = hash_data[offset..(-1 - offset)].index(':') + offset
     key_offset = colon_index + 1
     key_length = hash_data[offset..colon_index].to_i
-    Term.new(key_offset, key_length)
+    Term.new(hash_data, key_offset, key_length)
   end
   
   private
   
+  # TODO remove this method
   def dump
     @dump ||= TNetstring.parse(data).first # TODO
   end
@@ -71,13 +58,18 @@ end
 class Term
   attr_accessor :offset, :length
   
-  def initialize(offset, length)
+  def initialize(data, offset, length)
+    @data = data
     @offset = offset
     @length = length
   end
   
-  def value(data)
-    data[@offset..(@offset + @length - 1)]
+  def value
+    @data[@offset..(@offset + @length - 1)]
+  end
+  
+  def to_s
+    "(offset=#{@offset}, length=#{@length}) => #{value}"
   end
 end
 
