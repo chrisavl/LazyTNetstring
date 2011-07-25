@@ -116,9 +116,10 @@ describe LazyTNetstring do
         end
       end
     
-      context 'for simple hash' do
+      context 'for String' do
         let(:data) { TNetstring.dump({'foo' => 'bar'}) }
         it { should == 'bar' }
+        it { should be_a String}
       end
     
       context 'for nested hash' do
@@ -129,7 +130,7 @@ describe LazyTNetstring do
         its(:hash_data) { should == TNetstring.dump({ 'inner' => 'value'}) }
       end
     
-      # provides correct data type of leaf elements
+      # TODO provides correct data type of leaf elements
     end
   
   end
