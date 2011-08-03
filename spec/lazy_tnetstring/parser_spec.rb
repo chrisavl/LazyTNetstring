@@ -1,7 +1,7 @@
 require 'spec_helper'
 
-describe LazyTNetstring do
-  describe LazyTNetstring::Parser do
+module LazyTNetstring
+  describe Parser do
 
     describe '#new' do
       subject { LazyTNetstring::Parser.new(data) }
@@ -132,13 +132,4 @@ describe LazyTNetstring do
     end
 
   end
-
-  describe LazyTNetstring::Term do
-
-    describe '#value' do
-      subject { LazyTNetstring::Term.new('01234567489', 2, 3).value }
-      it { should == '234' }
-    end
-  end
-
 end
