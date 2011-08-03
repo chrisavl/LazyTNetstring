@@ -1,1 +1,1 @@
-rvm --create ruby-1.9.2-p180@kata
+rvm --create ruby-1.9.2-p180@lazy-tnetstring
