@@ -1,5 +1,7 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'rspec'
+require 'tnetstring'
+require 'lazy_tnetstring'
 
 RSpec.configure do |config|
   config.mock_with :rspec
