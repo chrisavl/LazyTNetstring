@@ -115,6 +115,55 @@ module LazyTNetstring
           parser['outer'][key].should == new_value
         end
       end
+
+      context "when changing multiple values on different levels" do
+        let(:data)      { TNetstring.dump(key => old_value, 'outer' => {key => old_value}) }
+        let(:new_value) { 'x' * 100 }
+        let(:new_data)  { TNetstring.dump(key => new_value, 'outer' => {key => new_value}) }
+
+        it 'should update the values in its data and adjust lengths accordingly' do
+          parser['outer'][key] = new_value
+          parser[key] = new_value
+          parser.data.should == new_data
+          parser.length.should == new_data.length
+          parser[key].should == new_value
+          parser['outer'][key].should == new_value
+        end
+      end
+
+      context "when changing multiple values on different levels while re-using scoped parsers" do
+        let(:data)      { TNetstring.dump({
+                            'key1' => old_value,
+                            'outer' => {
+                              'key1' => old_value,
+                              'key2' => old_value
+                            },
+                            'key2' => old_value
+                          })}
+        let(:new_value) { 'x' * 100 }
+        let(:new_data)  { TNetstring.dump({
+                            'key1' => new_value,
+                            'outer' => {
+                              'key1' => new_value,
+                              'key2' => new_value
+                            },
+                            'key2' => new_value
+                          })}
+
+        it 'should update the values in its data and adjust lengths accordingly' do
+          scoped_parser = parser['outer']
+          scoped_parser['key1'] = new_value
+          scoped_parser['key2'] = new_value
+          parser['key1'] = new_value
+          parser['key2'] = new_value
+          parser.data.should == new_data
+          parser.length.should == new_data.length
+          parser['key1'].should == new_value
+          parser['key2'].should == new_value
+          parser['outer']['key1'].should == new_value
+          parser['outer']['key2'].should == new_value
+        end
+      end
     end
 
   end
