@@ -14,12 +14,12 @@ Gem::Specification.new do |s|
   github_user     = 'jrirei'
   s.homepage      = "http://github.com/#{github_user}/LazyTNetstring"
 
+  s.add_dependency             'tnetstring'
   s.add_development_dependency 'rake'
   s.add_development_dependency 'rspec', '~> 2'
   s.add_development_dependency 'autotest'
   s.add_development_dependency 'activesupport'
   s.add_development_dependency 'i18n'
-  s.add_development_dependency 'tnetstring'
 
   # let's figure out the version
   wrapper = Module.new

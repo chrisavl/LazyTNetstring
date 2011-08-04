@@ -1,3 +1,5 @@
+require 'tnetstring'
+
 module LazyTNetstring
 
   autoload :Parser, 'lazy_tnetstring/parser'
