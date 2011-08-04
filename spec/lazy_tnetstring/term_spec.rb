@@ -2,17 +2,17 @@ require 'spec_helper'
 
 module LazyTNetstring
   describe Term do
-    let(:value)  { 'foo' }
-    let(:type)   { ',' }
-    let(:size)   { value.to_s.length }
-    let(:data)   { "#{size}:#{value}#{type}" }
-    let(:term)   { LazyTNetstring::Term.new(data, 0) }
+    let(:value) { 'foo' }
+    let(:type)  { ',' }
+    let(:size)  { value.to_s.length }
+    let(:data)  { "#{size}:#{value}#{type}" }
+    let(:term)  { LazyTNetstring::Term.new(data, 0) }
 
     describe '#new' do
       subject { term }
 
-      its(:data)   { should equal(data) }
-      its(:length) { should == size }
+      its(:data)         { should equal(data) }
+      its(:value_length) { should == size }
 
       context 'for non-tnetstring compliant data' do
         let(:data) { '12345' }

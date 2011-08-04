@@ -3,13 +3,16 @@ require 'lazy_tnetstring/exceptions'
 module LazyTNetstring
   class Parser
 
-    attr_reader :data, :offset, :value_offset, :value_length, :length
+    attr_reader :data, :offset, :value_offset, :value_length, :length, :scope_chain
 
-    def initialize(data, offset=0, length=data.length)
+    def initialize(data, offset=0, length=data.length, scope_chain=nil, scoped=false)
       raise UnsupportedTopLevelDataStructure, "data is not a Hash: #{data.inspect}" unless data.end_with? Term::Type::DICTIONARY
-      @data = data
-      @offset = offset
-      @length = length
+      @data        = data
+      @offset      = offset
+      @length      = length
+      @scope_chain = scope_chain
+      @scope_chain ||= [self]
+      @scope_chain.unshift(self) if scoped
       update_indices_and_length
     end
 
@@ -23,15 +26,35 @@ module LazyTNetstring
       old_length = term.length
       term.value = value
       length_delta = term.length - old_length
-      new_length = value_length + length_delta
-      update_indices_and_length(new_length)
-      # TODO: propagate length change up when in nested hashes
-      #       should be possible to keep track of outer parsers in a @parents
-      #       instance variable
+
+      scope_chain.each do |parser|
+        additional_length_delta = parser.update_indices_and_length(length_delta)
+        length_delta += additional_length_delta
+      end
     end
 
     def to_s
-      "LazyTNetstring::Parser(offset=#{offset}, length=#{length}) => #{data.inspect}"
+      "#<LazyTNetstring::Parser:#{object_id} @offset=#{offset.inspect} @length=#{length.inspect} @data=#{data.inspect}>"
+    end
+
+    protected
+
+    def update_indices_and_length(length_delta = nil)
+      if length_delta
+        @value_length += length_delta
+        @length += length_delta
+        data[offset..(value_offset-2)] = value_length.to_s
+        old_value_offset = value_offset
+        update_value_offset
+        additional_length_delta = value_offset - old_value_offset
+        @length += additional_length_delta
+      else
+        update_value_offset
+        @value_length = data[offset..(@value_offset-2)].to_i
+        additional_length_delta = nil
+      end
+
+      additional_length_delta
     end
 
     private
@@ -65,27 +88,19 @@ module LazyTNetstring
     end
 
     def term_at(offset)
-      Term.new(data, offset)
+      Term.new(data, offset, scope_chain)
     rescue InvalidTNetString
       raise KeyNotFoundError
     end
 
     def term_following(term)
-      term_at(term.value_offset + term.length + 1)
+      term_at(term.value_offset + term.value_length + 1)
     end
 
-    def update_indices_and_length(new_length = nil)
+    def update_value_offset
       colon_index = data[offset, 10].index(':')
       raise InvalidTNetString, 'no length found in #{data[offset, 10]}...' unless colon_index
       @value_offset = offset + colon_index + 1
-      if new_length
-        length_delta = new_length - @value_length
-        @value_length = new_length
-        @length += length_delta
-        data[offset..(value_offset-2)] = new_length.to_s
-      else
-        @value_length = data[offset..(@value_offset-2)].to_i
-      end
     end
 
   end

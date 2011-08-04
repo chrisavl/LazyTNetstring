@@ -90,15 +90,29 @@ module LazyTNetstring
         end
       end
 
-      context 'when changing the length' do
+      context "when changing the length of a top level key's value" do
         let(:data)      { TNetstring.dump({key => old_value}) }
-        let(:new_value) { 'quux' }
+        let(:new_value) { 'x' * 100 }
         let(:new_data)  { TNetstring.dump({key => new_value}) }
 
         it 'should update the value in its data and adjust lengths accordingly' do
           subject
           parser.data.should == new_data
           parser.length.should == new_data.length
+          parser[key].should == new_value
+        end
+      end
+
+      context "when changing the length of a nested key's value" do
+        let(:data)      { TNetstring.dump('outer' => {key => old_value}) }
+        let(:new_value) { 'x' * 100 }
+        let(:new_data)  { TNetstring.dump('outer' => {key => new_value}) }
+
+        it 'should update the value in its data and adjust lengths accordingly' do
+          parser['outer'][key] = new_value
+          parser.data.should == new_data
+          parser.length.should == new_data.length
+          parser['outer'][key].should == new_value
         end
       end
     end

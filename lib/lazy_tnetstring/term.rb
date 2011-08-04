@@ -5,12 +5,12 @@ module LazyTNetstring
 
     autoload :Type, 'lazy_tnetstring/term/type'
 
-    attr_accessor :offset, :length
-    attr_reader :data, :value_offset
+    attr_reader :data, :offset, :length, :value_length, :value_offset, :scope_chain
 
-    def initialize(data, offset)
-      @data = data
-      @offset = offset
+    def initialize(data, offset, scope_chain=[])
+      @data           = data
+      @offset         = offset
+      @scope_chain    = scope_chain
       update_indices_and_length
     end
 
@@ -21,14 +21,14 @@ module LazyTNetstring
       when Type::BOOLEAN    then boolean_from_raw_value
       when Type::NULL       then nil
       when Type::LIST       then array_from_raw_value
-      when Type::DICTIONARY then LazyTNetstring::Parser.new(data, offset, value_offset-offset+length+1)
+      when Type::DICTIONARY then LazyTNetstring::Parser.new(data, offset, value_offset-offset+value_length+1, scope_chain, true)
       else
         raise InvalidTNetString, "unknown term type #{type_id}"
       end
     end
 
     def raw_value
-      @raw_value ||= data[value_offset, length]
+      @raw_value ||= data[value_offset, value_length]
     end
 
     def value=(new_value)
@@ -36,18 +36,18 @@ module LazyTNetstring
     end
 
     def raw_data=(new_raw_data)
-      @data[offset, value_offset-offset+length+1] = new_raw_data
+      @data[offset, value_offset-offset+value_length+1] = new_raw_data
       update_indices_and_length
     end
 
     def to_s
-      "LazyTNetstring::Term(offset=#{offset}, length=#{length}) => #{self.value.inspect}"
+      "#<LazyTNetstring::Term:#{object_id} @offset=#{offset.inspect} @value_length=#{value_length.inspect} @value=#{value.inspect}>"
     end
 
     private
 
     def type_id
-      data[value_offset + length, 1]
+      data[value_offset + value_length, 1]
     end
 
     def boolean_from_raw_value
@@ -62,13 +62,13 @@ module LazyTNetstring
       result = []
       offset = 0
       while colon_index = raw_value[offset..-1].index(':') do
-        value_offset = offset + colon_index + 1
-        value_length = raw_value[offset..(value_offset - 1)].to_i
-        result << Term.new(data, @value_offset + offset)
-        offset = value_offset + value_length + 1
+        element_offset = offset + colon_index + 1
+        element_length = raw_value[offset..(element_offset - 1)].to_i
+        result << Term.new(data, @value_offset + offset).value
+        offset = element_offset + element_length + 1
       end
 
-      result.map(&:value)
+      result
     end
 
     def update_indices_and_length
@@ -76,7 +76,8 @@ module LazyTNetstring
       raise InvalidTNetString, 'no length found in #{data[offset, 10]}...' unless colon_index
 
       @value_offset = offset + colon_index + 1
-      @length = data[offset..(@value_offset-2)].to_i
+      @value_length = data[offset..(value_offset-2)].to_i
+      @length       = value_length + colon_index + 2
     end
 
   end
