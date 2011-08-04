@@ -12,7 +12,7 @@ module LazyTNetstring
       @data = data
       @offset = offset
       colon_index = data[offset..-1].index(':')
-      raise ::LazyTNetstring::KeyNotFoundError, 'Key not found' unless colon_index
+      raise InvalidTNetString, 'no length found in #{data[offset, 12]}...' unless colon_index
 
       @value_offset = offset + colon_index + 1
       @length = data[offset..(@value_offset - 1)].to_i
@@ -27,7 +27,7 @@ module LazyTNetstring
       when Type::LIST       then array_from_raw_value
       when Type::DICTIONARY then LazyTNetstring::Parser.new(data, offset, value_offset-offset+length)
       else
-        raise "unknown term type #{type_id}"
+        raise InvalidTNetString, "unknown term type #{type_id}"
       end
     end
 
@@ -49,7 +49,7 @@ module LazyTNetstring
       case raw_value
       when 'true' then true
       when 'false' then false
-      else raise 'invalid boolean value #{value}'
+      else raise InvalidTNetString, "invalid boolean value #{raw_value}"
       end
     end
 

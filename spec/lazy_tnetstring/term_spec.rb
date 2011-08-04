@@ -13,6 +13,15 @@ module LazyTNetstring
 
       its(:data)   { should equal(data) }
       its(:length) { should == size }
+
+      context 'for non-tnetstring compliant data' do
+        let(:data) { '12345' }
+
+        it 'rejects initialization' do
+          expect { subject }.to raise_error(LazyTNetstring::InvalidTNetString)
+        end
+      end
+
     end
 
     describe '#value' do
@@ -44,6 +53,14 @@ module LazyTNetstring
           let(:value) { 'false' }
           it { should be_false }
         end
+
+        context 'when undefined' do
+          let(:value) { 'something' }
+
+          it 'raises InvalidTNetString' do
+            expect { subject }.to raise_error(LazyTNetstring::InvalidTNetString)
+          end
+        end
       end
 
       context 'for Null values' do
@@ -65,6 +82,14 @@ module LazyTNetstring
         let(:value) { '3:key,5:value' }
 
         it { should be_an LazyTNetstring::Parser }
+      end
+
+      context 'for undefined types' do
+        let(:type)  { '/' }
+
+        it 'raises InvalidTNetString' do
+          expect { subject }.to raise_error(LazyTNetstring::InvalidTNetString)
+        end
       end
     end
 

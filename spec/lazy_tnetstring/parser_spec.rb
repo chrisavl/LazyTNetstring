@@ -6,11 +6,19 @@ module LazyTNetstring
     describe '#new' do
       subject { LazyTNetstring::Parser.new(data) }
 
-      context 'for anything but a hash' do
+      context 'for non-tnetstring compliant data' do
+        let(:data) { '12345}' }
+
+        it 'rejects initialization' do
+          expect { subject }.to raise_error(LazyTNetstring::InvalidTNetString)
+        end
+      end
+
+      context 'for anything but a hash at the top level' do
         let(:data) { TNetstring.dump(1) }
 
         it 'rejects initialization' do
-          expect { subject }.to raise_error
+          expect { subject }.to raise_error(LazyTNetstring::UnsupportedTopLevelDataStructure)
         end
       end
 

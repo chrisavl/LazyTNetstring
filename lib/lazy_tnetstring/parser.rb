@@ -3,13 +3,16 @@ require 'lazy_tnetstring/exceptions'
 module LazyTNetstring
   class Parser
 
-    attr_reader :data, :offset, :length
+    attr_reader :data, :offset, :value_offset, :length
 
     def initialize(data, offset=0, length=data.length)
-      raise "Data is not a Hash: #{data.inspect}" unless data.end_with? Term::Type::DICTIONARY
+      raise UnsupportedTopLevelDataStructure, "data is not a Hash: #{data.inspect}" unless data.end_with? Term::Type::DICTIONARY
       @data = data
       @offset = offset
       @length = length
+      colon_index = hash_data.index(':')
+      raise InvalidTNetString, 'no length found in #{data[offset, 12]}...' unless colon_index
+      @value_offset = colon_index + 1
     end
 
     def [](key)
@@ -19,8 +22,7 @@ module LazyTNetstring
         return nil
       end
 
-      found_value = term_following found_key
-      found_value.value
+      term_following(found_key).value
     end
 
     def to_s
@@ -30,30 +32,32 @@ module LazyTNetstring
     private
 
     def find_key(key)
-      offset = hash_data.index(':') + 1
-      term = next_term(offset)
-      term_type = :key
+      term = first_term
 
-      loop do
-        if key == term.value && term_type == :key
-          return term
-        end
-        offset = term.value_offset + term.length + 1
-        term = term_following term # may throw an KeyNotFoundException to abort looping
-        term_type = (term_type == :key ? :value : :key)
+      while term.value != key
+        term = term_following term # skip value
+        term = term_following term # find next key
       end
+
+      term
     end
 
     def hash_data
-      @data[@offset..(@offset + @length)]
+      data[offset, length+1]
+    end
+
+    def first_term
+      term_at(value_offset)
+    end
+
+    def term_at(offset)
+      Term.new(hash_data, offset)
+    rescue InvalidTNetString
+      raise KeyNotFoundError
     end
 
     def term_following(term)
-      next_term(term.value_offset + term.length + 1)
-    end
-
-    def next_term(offset)
-      Term.new(hash_data, offset)
+      term_at(term.value_offset + term.length + 1)
     end
 
   end
