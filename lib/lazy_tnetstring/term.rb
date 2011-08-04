@@ -10,7 +10,7 @@ module LazyTNetstring
     end
 
     def value
-      @data[@offset..(@offset + @length - 1)]
+      @data[@offset, @length]
     end
 
     def is_leaf?
