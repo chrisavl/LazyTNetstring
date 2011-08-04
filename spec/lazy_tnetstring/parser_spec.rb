@@ -10,18 +10,26 @@ module LazyTNetstring
         let(:data) { TNetstring.dump(1) }
 
         it 'rejects initialization' do
-          expect { should }.to raise_error
+          expect { subject }.to raise_error
         end
       end
 
       context 'for an empty hash' do
         let(:data) { TNetstring.dump({}) }
+
         it { should be_an LazyTNetstring::Parser }
+        its(:data)   { should == data }
+        its(:offset) { should == 0 }
+        its(:length) { should == data.length }
       end
 
       context 'for a hash' do
         let(:data) { TNetstring.dump({'key' => 'value', 'another' => 'value'}) }
+
         it { should be_an LazyTNetstring::Parser }
+        its(:data)   { should == data }
+        its(:offset) { should == 0 }
+        its(:length) { should == data.length }
       end
     end
 
