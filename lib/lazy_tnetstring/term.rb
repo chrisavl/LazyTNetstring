@@ -14,7 +14,7 @@ module LazyTNetstring
     end
 
     def is_leaf?
-      @data[@offset + @length, 1] != "}"
+      @data[@offset + @length, 1] != '}'
     end
 
     def to_s

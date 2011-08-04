@@ -57,7 +57,7 @@ module LazyTNetstring
 
     def next_term(offset)
       colon_index = hash_data[offset..-1].index(':')
-      raise KeyNotFoundError, "Key not found" unless colon_index
+      raise KeyNotFoundError, 'Key not found' unless colon_index
 
       key_offset = offset + colon_index + 1
       key_length = hash_data[offset..(key_offset - 1)].to_i
