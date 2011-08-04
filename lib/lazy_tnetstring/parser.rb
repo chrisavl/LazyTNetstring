@@ -15,7 +15,6 @@ module LazyTNetstring
     def [](key)
       begin
         found_key = find_key(key)
-        p found_key
       rescue KeyNotFoundError
         return nil
       end
