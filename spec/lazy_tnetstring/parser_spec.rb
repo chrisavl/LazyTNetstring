@@ -47,10 +47,9 @@ module LazyTNetstring
         it { should be_nil }
       end
 
-      context 'for String' do
+      context 'for known keys' do
         let(:data) { TNetstring.dump({'foo' => 'bar'}) }
         it { should == 'bar' }
-        it { should be_a String}
       end
 
       context 'for nested hash' do
@@ -59,9 +58,11 @@ module LazyTNetstring
 
         it { should be_an LazyTNetstring::Parser }
         its(:hash_data) { should == TNetstring.dump({ 'inner' => 'value'}) }
-      end
 
-      # TODO provides correct data type of leaf elements
+        it 'should provide access to the inner hash' do
+          subject['inner'].should == 'value'
+        end
+      end
     end
 
     describe '#find_key' do
