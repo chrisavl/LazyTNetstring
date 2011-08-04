@@ -26,6 +26,13 @@ module LazyTNetstring
 
         it { should == 'foo' }
       end
+
+      context 'for Integer values' do
+        let(:value) { 4711 }
+        let(:type)  { '#' }
+
+        it { should == 4711 }
+      end
     end
 
   end

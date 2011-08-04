@@ -1,6 +1,16 @@
 module LazyTNetstring
 
   class Term
+
+    module Type
+      STRING     = ','
+      INTEGER    = '#'
+      BOOLEAN    = '!'
+      NULL       = '~'
+      DICTIONARY = '}'
+      LIST       = ']'
+    end
+
     attr_accessor :offset, :length
     attr_reader :data
 
@@ -11,7 +21,13 @@ module LazyTNetstring
     end
 
     def value
-      @data[@offset, @length]
+      case type_id
+      when Type::STRING then @data[@offset, @length]
+      when Type::INTEGER then @data[@offset, @length].to_i
+      when Type::DICTIONARY then @data[@offset, @length] # TODO: couldn't the Term be responsible for providing a new Parser for Dictionaries?
+      else
+        raise "unknown term type #{type_id}"
+      end
     end
 
     def is_leaf?
