@@ -11,11 +11,7 @@ module LazyTNetstring
     def initialize(data, offset)
       @data = data
       @offset = offset
-      colon_index = data[offset..-1].index(':')
-      raise InvalidTNetString, 'no length found in #{data[offset, 12]}...' unless colon_index
-
-      @value_offset = offset + colon_index + 1
-      @length = data[offset..(@value_offset - 1)].to_i
+      update_indices_and_length
     end
 
     def value
@@ -25,7 +21,7 @@ module LazyTNetstring
       when Type::BOOLEAN    then boolean_from_raw_value
       when Type::NULL       then nil
       when Type::LIST       then array_from_raw_value
-      when Type::DICTIONARY then LazyTNetstring::Parser.new(data, offset, value_offset-offset+length)
+      when Type::DICTIONARY then LazyTNetstring::Parser.new(data, offset, value_offset-offset+length+1)
       else
         raise InvalidTNetString, "unknown term type #{type_id}"
       end
@@ -33,6 +29,15 @@ module LazyTNetstring
 
     def raw_value
       @raw_value ||= data[value_offset, length]
+    end
+
+    def value=(new_value)
+      self.raw_data = TNetstring.dump(new_value)
+    end
+
+    def raw_data=(new_raw_data)
+      @data[offset, value_offset-offset+length+1] = new_raw_data
+      update_indices_and_length
     end
 
     def to_s
@@ -64,6 +69,14 @@ module LazyTNetstring
       end
 
       result.map(&:value)
+    end
+
+    def update_indices_and_length
+      colon_index = data[offset, 10].index(':')
+      raise InvalidTNetString, 'no length found in #{data[offset, 10]}...' unless colon_index
+
+      @value_offset = offset + colon_index + 1
+      @length = data[offset..(@value_offset-2)].to_i
     end
 
   end
