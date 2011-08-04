@@ -7,7 +7,7 @@ module LazyTNetstring
     attr_reader :data, :offset, :length
 
     def initialize(data, offset=0, length=data.length)
-      raise "Invalid data #{data.inspect}" unless data.end_with? '}'
+      raise "Data is not a Hash: #{data.inspect}" unless data.end_with? '}'
       @data = data
       @offset = offset
       @length = length
