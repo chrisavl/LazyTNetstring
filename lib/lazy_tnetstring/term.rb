@@ -2,6 +2,7 @@ module LazyTNetstring
 
   class Term
     attr_accessor :offset, :length
+    attr_reader :data
 
     def initialize(data, offset, length)
       @data = data
