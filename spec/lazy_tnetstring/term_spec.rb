@@ -33,6 +33,43 @@ module LazyTNetstring
 
         it { should == 4711 }
       end
+
+      context 'for Boolean values' do
+        let(:type)  { '!' }
+
+        context 'when true' do
+          let(:value) { 'true' }
+          it { should be_true }
+        end
+
+        context 'when false' do
+          let(:value) { 'false' }
+          it { should be_false }
+        end
+      end
+
+      context 'for Null values' do
+        let(:type)  { '~' }
+        let(:value) { '' }
+
+        it { should be_nil }
+      end
+
+      context 'for List values' do
+        let(:type)  { ']' }
+        let(:value) { '3:one,2:23#4:true!' }
+
+        it { should == ['one', 23, true] }
+      end
+
+      context 'for Dictionary values' do
+        let(:type)  { '}' }
+        let(:value) { '3:key,5:value' }
+
+        it 'should leave the value unparsed' do
+          subject.should == value
+        end
+      end
     end
 
   end
