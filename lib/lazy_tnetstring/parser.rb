@@ -14,7 +14,12 @@ module LazyTNetstring
     end
 
     def [](key)
-      found_key = find_key(key)
+      begin
+        found_key = find_key(key)
+      rescue KeyNotFoundError
+        return nil
+      end
+
       found_value = term_following found_key
       if found_value.is_leaf?
         found_value.value
@@ -56,6 +61,6 @@ module LazyTNetstring
       key_length = hash_data[offset..(key_offset - 1)].to_i
       Term.new(hash_data, key_offset, key_length)
     end
-  end
 
+  end
 end

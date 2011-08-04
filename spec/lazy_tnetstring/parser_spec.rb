@@ -40,7 +40,7 @@ module LazyTNetstring
 
       context 'for unknown key' do
         let(:key) { 'unknown' }
-        it 'rejects key access' do
+        it 'raises KeyNotFoundError' do
           expect { subject }.to raise_error(LazyTNetstring::KeyNotFoundError)
         end
       end
@@ -109,9 +109,12 @@ module LazyTNetstring
 
       context 'for empty hash' do
         let(:data) { TNetstring.dump({}) }
-        it 'rejects key access' do
-          expect { should }.to raise_error
-        end
+        it { should be_nil }
+      end
+
+      context 'for unknown keys' do
+        let(:data) { TNetstring.dump({'baz' => 'bar'}) }
+        it { should be_nil }
       end
 
       context 'for String' do
