@@ -6,7 +6,7 @@ module LazyTNetstring
     attr_reader :data, :offset, :length
 
     def initialize(data, offset=0, length=data.length)
-      raise "Data is not a Hash: #{data.inspect}" unless data.end_with? '}'
+      raise "Data is not a Hash: #{data.inspect}" unless data.end_with? Term::Type::DICTIONARY
       @data = data
       @offset = offset
       @length = length
@@ -15,18 +15,17 @@ module LazyTNetstring
     def [](key)
       begin
         found_key = find_key(key)
+        p found_key
       rescue KeyNotFoundError
         return nil
       end
 
       found_value = term_following found_key
-      if found_value.is_leaf?
-        found_value.value
-      else
-        node_offset = found_value.offset - found_value.length.to_s.length - 1
-        node_length = found_value.length.to_s.length + 1 + found_value.length
-        Parser.new(data, node_offset, node_length) # includes leading size and ':' as well as trailing '}'
-      end
+      found_value.value
+    end
+
+    def to_s
+      "LazyTNetstring::Parser(offset=#{offset}, length=#{length}) => #{data.inspect}"
     end
 
     private
@@ -40,7 +39,7 @@ module LazyTNetstring
         if key == term.value && term_type == :key
           return term
         end
-        offset = term.offset + term.length + 1
+        offset = term.value_offset + term.length + 1
         term = term_following term # may throw an KeyNotFoundException to abort looping
         term_type = (term_type == :key ? :value : :key)
       end
@@ -51,16 +50,11 @@ module LazyTNetstring
     end
 
     def term_following(term)
-      next_term(term.offset + term.length + 1)
+      next_term(term.value_offset + term.length + 1)
     end
 
     def next_term(offset)
-      colon_index = hash_data[offset..-1].index(':')
-      raise KeyNotFoundError, 'Key not found' unless colon_index
-
-      key_offset = offset + colon_index + 1
-      key_length = hash_data[offset..(key_offset - 1)].to_i
-      Term.new(hash_data, key_offset, key_length)
+      Term.new(hash_data, offset)
     end
 
   end

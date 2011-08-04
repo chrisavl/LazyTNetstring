@@ -6,14 +6,12 @@ module LazyTNetstring
     let(:type)   { ',' }
     let(:size)   { value.to_s.length }
     let(:data)   { "#{size}:#{value}#{type}" }
-    let(:offset) { size.to_s.length+1 }
-    let(:term)   { LazyTNetstring::Term.new(data, offset, size) }
+    let(:term)   { LazyTNetstring::Term.new(data, 0) }
 
     describe '#new' do
       subject { term }
 
       its(:data)   { should equal(data) }
-      its(:offset) { should == offset }
       its(:length) { should == size }
     end
 
@@ -66,9 +64,7 @@ module LazyTNetstring
         let(:type)  { '}' }
         let(:value) { '3:key,5:value' }
 
-        it 'should leave the value unparsed' do
-          subject.should == value
-        end
+        it { should be_an LazyTNetstring::Parser }
       end
     end
 
