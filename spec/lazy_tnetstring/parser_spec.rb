@@ -164,6 +164,46 @@ module LazyTNetstring
           parser['outer']['key2'].should == new_value
         end
       end
+
+      context "when changing multiple interleaved values on different levels while re-using scoped parsers" do
+        let(:data)      { TNetstring.dump({
+                            'key1' => old_value,
+                            'outer' => {
+                              'key1' => old_value,
+                              'key2' => old_value
+                            },
+                            'key2' => old_value
+                          })}
+        let(:new_value) { 'x' * 100 }
+        let(:new_data)  { TNetstring.dump({
+                            'key1' => new_value,
+                            'outer' => {
+                              'key1' => new_value,
+                              'key2' => new_value
+                            },
+                            'key2' => new_value
+                          })}
+
+        it 'should update the values in its data and adjust lengths accordingly' do
+          pending
+          # TODO: as the top level parser does not know anything about its
+          # children yet, access to previously saved scoped parsers fails.
+          # We would need to keep track of children and update their offsets
+          # accordingly when a parent structure changes.
+
+          scoped_parser = parser['outer']
+          parser['key1'] = new_value
+          scoped_parser['key1'] = new_value
+          parser['key2'] = new_value
+          scoped_parser['key2'] = new_value
+          parser.data.should == new_data
+          parser.length.should == new_data.length
+          parser['key1'].should == new_value
+          parser['key2'].should == new_value
+          parser['outer']['key1'].should == new_value
+          parser['outer']['key2'].should == new_value
+        end
+      end
     end
 
   end
