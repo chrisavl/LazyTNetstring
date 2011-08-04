@@ -30,6 +30,8 @@ module LazyTNetstring
       end
     end
 
+    private
+
     def find_key(key)
       offset = hash_data.index(':') + 1
       term = next_term(offset)

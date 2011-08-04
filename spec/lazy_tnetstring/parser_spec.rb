@@ -65,7 +65,7 @@ module LazyTNetstring
     end
 
     describe '#find_key' do
-      subject { LazyTNetstring::Parser.new(data).find_key(key) }
+      subject { LazyTNetstring::Parser.new(data).send(:find_key, key) }
       let(:data) {
         TNetstring.dump({'key1' => 'value1',
                          'key2' => 'key3',
@@ -110,7 +110,7 @@ module LazyTNetstring
     end
 
     describe '#next_term' do
-      subject { LazyTNetstring::Parser.new(data).next_term(offset) }
+      subject { LazyTNetstring::Parser.new(data).send(:next_term, offset) }
       let(:data) { TNetstring.dump({'key_longer_than_10_chars' => 'value1',
                                     'key2' => {'subkey1' => 1, 'subkey2' => 2},
                                     'key3' => 'foobar'}) }
