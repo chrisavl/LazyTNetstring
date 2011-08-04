@@ -1,15 +1,9 @@
-module LazyTNetstring
+require 'lazy_tnetstring/exceptions'
 
+module LazyTNetstring
   class Term
 
-    module Type
-      STRING     = ','
-      INTEGER    = '#'
-      BOOLEAN    = '!'
-      NULL       = '~'
-      DICTIONARY = '}'
-      LIST       = ']'
-    end
+    autoload :Type, 'lazy_tnetstring/term/type'
 
     attr_accessor :offset, :length
     attr_reader :data

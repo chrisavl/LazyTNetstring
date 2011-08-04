@@ -1,7 +1,6 @@
+require 'lazy_tnetstring/exceptions'
+
 module LazyTNetstring
-
-  class KeyNotFoundError < Exception; end
-
   class Parser
 
     attr_reader :data, :offset, :length
