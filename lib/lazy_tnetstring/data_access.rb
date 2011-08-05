@@ -33,11 +33,7 @@ module LazyTNetstring
       term.value = value
       length_delta = term.length - old_length
 
-      # propagate length changes up the parent chain
       propagate_length_update(length_delta)
-
-      # update offsets from the root to all children
-      root.propagate_offset_update
     end
 
     def add_child(data_access)
@@ -57,7 +53,9 @@ module LazyTNetstring
     def propagate_length_update(length_delta)
       additional_length_delta = update_indices_and_length(length_delta)
       if parent
-        parent.update_indices_and_length(length_delta + additional_length_delta)
+        parent.propagate_length_update(length_delta + additional_length_delta)
+      else
+        propagate_offset_update # reached root, now propagate offset update to all children
       end
     end
 
@@ -136,10 +134,6 @@ module LazyTNetstring
 
     def term_following(term)
       term_at(term.value_offset + term.value_length + 1, term.scope)
-    end
-
-    def root
-      parents.last
     end
 
     def parent
