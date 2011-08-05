@@ -1,10 +1,8 @@
 source 'http://rubygems.org'
 
-gem 'tnetstring'
+gemspec
 
 group :development do
-  gem 'rspec'
-  gem 'autotest'
-  gem 'autotest-fsevent'
-  gem 'autotest-growl'
+  gem 'autotest-fsevent' if (RUBY_PLATFORM =~ /darwin/i)
+  gem 'autotest-growl' if (RUBY_PLATFORM =~ /darwin/i)
 end
