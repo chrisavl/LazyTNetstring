@@ -34,13 +34,10 @@ module LazyTNetstring
       length_delta = term.length - old_length
 
       # propagate length changes up the parent chain
-      parents.each do |data_access|
-        additional_length_delta = data_access.update_indices_and_length(length_delta)
-        length_delta += additional_length_delta
-      end
+      propagate_length_update(length_delta)
 
       # update offsets from the root to all children
-      parents.last.propagate_offset_update
+      root.propagate_offset_update
     end
 
     def add_child(data_access)
@@ -48,7 +45,7 @@ module LazyTNetstring
     end
 
     def to_s
-      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @length=#{length.inspect} @data=#{data.inspect}(len=#{data.length}) parents=#{parents.map(&:object_id).inspect}(count=#{parents.size})>"
+      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @length=#{length.inspect} @data=#{data.inspect}(len=#{data.length}) parents=#{parents.map(&:object_id).inspect}(count=#{parents.size})> children=#{children.map(&:object_id).inspect}(count=#{children.size})"
     end
 
     protected
@@ -57,11 +54,15 @@ module LazyTNetstring
       data[offset, length]
     end
 
-    def propagate_offset_update
-      if parent = parents[1]
-        self.offset = parent.value_offset_for_key(scope)
+    def propagate_length_update(length_delta)
+      additional_length_delta = update_indices_and_length(length_delta)
+      if parent
+        parent.update_indices_and_length(length_delta + additional_length_delta)
       end
+    end
 
+    def propagate_offset_update
+      self.offset = parent.value_offset_for_key(scope) if parent
       update_value_offset
 
       children.each do |child|
@@ -135,6 +136,14 @@ module LazyTNetstring
 
     def term_following(term)
       term_at(term.value_offset + term.value_length + 1, term.scope)
+    end
+
+    def root
+      parents.last
+    end
+
+    def parent
+      parents[1]
     end
 
   end
