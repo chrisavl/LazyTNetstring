@@ -81,7 +81,7 @@ module LazyTNetstring
         let(:type)  { '}' }
         let(:value) { '3:key,5:value' }
 
-        it { should be_a LazyTNetstring::Parser }
+        it { should be_a LazyTNetstring::DataAccess }
       end
 
       context 'for undefined types' do

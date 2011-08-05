@@ -1,10 +1,10 @@
 require 'spec_helper'
 
 module LazyTNetstring
-  describe Parser do
+  describe DataAccess do
 
     describe '#new' do
-      subject { LazyTNetstring::Parser.new(data) }
+      subject { LazyTNetstring::DataAccess.new(data) }
 
       context 'for non-tnetstring compliant data' do
         let(:data) { '12345}' }
@@ -25,7 +25,7 @@ module LazyTNetstring
       context 'for an empty hash' do
         let(:data) { TNetstring.dump({}) }
 
-        it { should be_an LazyTNetstring::Parser }
+        it { should be_an LazyTNetstring::DataAccess }
         its(:data)   { should == data }
         its(:offset) { should == 0 }
         its(:length) { should == data.length }
@@ -34,7 +34,7 @@ module LazyTNetstring
       context 'for a hash' do
         let(:data) { TNetstring.dump({'key' => 'value', 'another' => 'value'}) }
 
-        it { should be_an LazyTNetstring::Parser }
+        it { should be_an LazyTNetstring::DataAccess }
         its(:data)   { should == data }
         its(:offset) { should == 0 }
         its(:length) { should == data.length }
@@ -42,7 +42,7 @@ module LazyTNetstring
     end
 
     describe '#[]' do
-      subject   { LazyTNetstring::Parser.new(data)[key]}
+      subject   { LazyTNetstring::DataAccess.new(data)[key]}
       let(:key) { 'foo' }
 
       context 'for empty hash' do
@@ -64,7 +64,7 @@ module LazyTNetstring
         let(:data) { TNetstring.dump({'outer' => { 'inner' => 'value'} }) }
         let(:key)  { 'outer' }
 
-        it { should be_an LazyTNetstring::Parser }
+        it { should be_an LazyTNetstring::DataAccess }
         its(:scoped_data) { should == TNetstring.dump({ 'inner' => 'value'}) }
 
         it 'should provide access to the inner hash' do
@@ -74,19 +74,19 @@ module LazyTNetstring
     end
 
     describe '#[]=(key, new_value)' do
-      subject         { parser[key] = new_value }
-      let(:parser)    { LazyTNetstring::Parser.new(data) }
-      let(:data)      { TNetstring.dump({key => old_value}) }
-      let(:key)       { 'foo' }
-      let(:old_value) { 'bar' }
-      let(:new_value) { 'baz' }
+      subject           { data_access[key] = new_value }
+      let(:data_access) { LazyTNetstring::DataAccess.new(data) }
+      let(:data)        { TNetstring.dump({key => old_value}) }
+      let(:key)         { 'foo' }
+      let(:old_value)   { 'bar' }
+      let(:new_value)   { 'baz' }
 
       it { should equal(new_value) }
 
       context 'whithout changing the length' do
         it 'should update the value in its data' do
           subject
-          parser.data.should == data.sub('bar', 'baz')
+          data_access.data.should == data.sub('bar', 'baz')
         end
       end
 
@@ -97,9 +97,9 @@ module LazyTNetstring
 
         it 'should update the value in its data and adjust lengths accordingly' do
           subject
-          parser.data.should == new_data
-          parser.length.should == new_data.length
-          parser[key].should == new_value
+          data_access.data.should == new_data
+          data_access.length.should == new_data.length
+          data_access[key].should == new_value
         end
       end
 
@@ -109,10 +109,10 @@ module LazyTNetstring
         let(:new_data)  { TNetstring.dump('outer' => {key => new_value}) }
 
         it 'should update the value in its data and adjust lengths accordingly' do
-          parser['outer'][key] = new_value
-          parser.data.should == new_data
-          parser.length.should == new_data.length
-          parser['outer'][key].should == new_value
+          data_access['outer'][key] = new_value
+          data_access.data.should == new_data
+          data_access.length.should == new_data.length
+          data_access['outer'][key].should == new_value
         end
       end
 
@@ -122,16 +122,16 @@ module LazyTNetstring
         let(:new_data)  { TNetstring.dump(key => new_value, 'outer' => {key => new_value}) }
 
         it 'should update the values in its data and adjust lengths accordingly' do
-          parser['outer'][key] = new_value
-          parser[key] = new_value
-          parser.data.should == new_data
-          parser.length.should == new_data.length
-          parser[key].should == new_value
-          parser['outer'][key].should == new_value
+          data_access['outer'][key] = new_value
+          data_access[key] = new_value
+          data_access.data.should == new_data
+          data_access.length.should == new_data.length
+          data_access[key].should == new_value
+          data_access['outer'][key].should == new_value
         end
       end
 
-      context "when changing multiple values on different levels while re-using scoped parsers" do
+      context "when changing multiple values on different levels while re-using scoped data_accesses" do
         let(:data)      { TNetstring.dump({
                             'key1' => old_value,
                             'outer' => {
@@ -151,21 +151,21 @@ module LazyTNetstring
                           })}
 
         it 'should update the values in its data and adjust lengths accordingly' do
-          scoped_parser = parser['outer']
-          scoped_parser['key1'] = new_value
-          scoped_parser['key2'] = new_value
-          parser['key1'] = new_value
-          parser['key2'] = new_value
-          parser.data.should == new_data
-          parser.length.should == new_data.length
-          parser['key1'].should == new_value
-          parser['key2'].should == new_value
-          parser['outer']['key1'].should == new_value
-          parser['outer']['key2'].should == new_value
+          scoped_data_access = data_access['outer']
+          scoped_data_access['key1'] = new_value
+          scoped_data_access['key2'] = new_value
+          data_access['key1'] = new_value
+          data_access['key2'] = new_value
+          data_access.data.should == new_data
+          data_access.length.should == new_data.length
+          data_access['key1'].should == new_value
+          data_access['key2'].should == new_value
+          data_access['outer']['key1'].should == new_value
+          data_access['outer']['key2'].should == new_value
         end
       end
 
-      context "when changing multiple interleaved values on different levels while re-using scoped parsers" do
+      context "when changing multiple interleaved values on different levels while re-using scoped data_accesses" do
         let(:data)      { TNetstring.dump({
                             'key1' => old_value,
                             'outer' => {
@@ -186,22 +186,22 @@ module LazyTNetstring
 
         it 'should update the values in its data and adjust lengths accordingly' do
           pending
-          # TODO: as the top level parser does not know anything about its
-          # children yet, access to previously saved scoped parsers fails.
+          # TODO: as the top level data_access does not know anything about its
+          # children yet, access to previously saved scoped data_accesses fails.
           # We would need to keep track of children and update their offsets
           # accordingly when a parent structure changes.
 
-          scoped_parser = parser['outer']
-          parser['key1'] = new_value
-          scoped_parser['key1'] = new_value
-          parser['key2'] = new_value
-          scoped_parser['key2'] = new_value
-          parser.data.should == new_data
-          parser.length.should == new_data.length
-          parser['key1'].should == new_value
-          parser['key2'].should == new_value
-          parser['outer']['key1'].should == new_value
-          parser['outer']['key2'].should == new_value
+          scoped_data_access = data_access['outer']
+          data_access['key1'] = new_value
+          scoped_data_access['key1'] = new_value
+          data_access['key2'] = new_value
+          scoped_data_access['key2'] = new_value
+          data_access.data.should == new_data
+          data_access.length.should == new_data.length
+          data_access['key1'].should == new_value
+          data_access['key2'].should == new_value
+          data_access['outer']['key1'].should == new_value
+          data_access['outer']['key2'].should == new_value
         end
       end
     end

@@ -1,7 +1,7 @@
 require 'lazy_tnetstring/exceptions'
 
 module LazyTNetstring
-  class Parser
+  class DataAccess
 
     attr_reader :data, :offset, :value_offset, :value_length, :length, :scope_chain, :scope
 
@@ -31,23 +31,27 @@ module LazyTNetstring
       old_length = term.length
       term.value = value
       length_delta = term.length - old_length
-      scope_chain.each do |parser|
-        additional_length_delta = parser.update_indices_and_length(length_delta)
+      puts "\nupdating all elements in the scope chain"
+      scope_chain.each do |data_access|
+        additional_length_delta = data_access.update_indices_and_length(length_delta)
+        puts "updating indices and length with delta=#{length_delta} for data_access #{data_access}, additional_length_delta=#{additional_length_delta}"
         length_delta += additional_length_delta
       end
 
       parent = nil
-      scope_chain.reverse.each do |parser|
-        if parser.scope && parent
-          parser.offset = parent.value_offset_for_key(scope)
-          parser.update_value_offset
+      scope_chain.reverse.each do |data_access|
+        if data_access.scope && parent
+          puts "adjusting offset of #{data_access} for scope #{scope.inspect} to #{parent.value_offset_for_key(scope)}"
+          data_access.offset = parent.value_offset_for_key(scope)
+          data_access.update_value_offset
+          puts "#{data_access}'s scoped data now starts with #{data_access.scoped_data[0, 20]}..."
         end
-        parent = parser
+        parent = data_access
       end
     end
 
     def to_s
-      "#<LazyTNetstring::Parser:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @length=#{length.inspect} @data=#{data.inspect}(len=#{data.length})>"
+      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @length=#{length.inspect} @data=#{data.inspect}(len=#{data.length})>"
     end
 
     protected
