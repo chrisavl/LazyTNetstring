@@ -15,6 +15,7 @@ module LazyTNetstring
       @scope    = scope
 
       update_indices_and_length
+      parent.add_child(self) if parent
     end
 
     def [](key)
@@ -31,10 +32,6 @@ module LazyTNetstring
       propagate_length_update(length_delta)
     end
 
-    def add_child(data_access)
-      @children << data_access
-    end
-
     def to_s
       "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @length=#{length.inspect} @data=#{data.inspect}(len=#{data.length}) parent=#{parent.object_id} children=#{children.map(&:object_id).inspect}(count=#{children.size})>"
     end
@@ -43,6 +40,10 @@ module LazyTNetstring
 
     def scoped_data
       data[offset, length]
+    end
+
+    def add_child(data_access)
+      @children << data_access
     end
 
     def propagate_length_update(length_delta)

@@ -22,10 +22,7 @@ module LazyTNetstring
       when Type::BOOLEAN    then boolean_from_raw_value
       when Type::NULL       then nil
       when Type::LIST       then array_from_raw_value
-      when Type::DICTIONARY then
-        da = LazyTNetstring::DataAccess.new(data, offset, value_offset-offset+value_length+1, parent, scope)
-        parent.add_child(da) if parent
-        da
+      when Type::DICTIONARY then LazyTNetstring::DataAccess.new(data, offset, value_offset-offset+value_length+1, parent, scope)
       else
         raise InvalidTNetString, "unknown term type #{type_id}"
       end
