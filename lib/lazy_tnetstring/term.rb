@@ -38,6 +38,7 @@ module LazyTNetstring
 
     def raw_data=(new_raw_data)
       @data[offset, value_offset-offset+value_length+1] = new_raw_data
+      @raw_value = nil
       update_indices_and_length
     end
 
