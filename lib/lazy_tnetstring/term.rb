@@ -74,12 +74,15 @@ module LazyTNetstring
     end
 
     def update_indices_and_length
+      @value_offset = recalculated_value_offset
+      @value_length = data[offset..(value_offset-2)].to_i
+      @length       = value_length + value_offset + 1
+    end
+
+    def recalculated_value_offset
       colon_index = data[offset, 10].index(':')
       raise InvalidTNetString, "no length found in #{data[offset, 10]}..." unless colon_index
-
-      @value_offset = offset + colon_index + 1
-      @value_length = data[offset..(value_offset-2)].to_i
-      @length       = value_length + colon_index + 2
+      offset + colon_index + 1
     end
 
   end

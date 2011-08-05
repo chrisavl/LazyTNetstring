@@ -57,7 +57,7 @@ module LazyTNetstring
 
     def propagate_offset_update
       self.offset = parent.value_offset_for_key(scope) if parent
-      update_value_offset
+      @value_offset = recalculated_value_offset
 
       children.each do |child|
         child.propagate_offset_update
@@ -70,11 +70,11 @@ module LazyTNetstring
         @length += length_delta
         data[offset..(value_offset-2)] = value_length.to_s
         old_value_offset = value_offset
-        update_value_offset
+        @value_offset = recalculated_value_offset
         additional_length_delta = value_offset - old_value_offset
         @length += additional_length_delta
       else
-        update_value_offset
+        @value_offset = recalculated_value_offset
         @value_length = data[offset..(@value_offset-2)].to_i
         additional_length_delta = nil
       end
@@ -82,10 +82,10 @@ module LazyTNetstring
       additional_length_delta
     end
 
-    def update_value_offset
+    def recalculated_value_offset
       colon_index = data[offset, 10].index(':')
       raise InvalidTNetString, "no length found in #{data[offset, 10]}..." unless colon_index
-      @value_offset = offset + colon_index + 1
+      offset + colon_index + 1
     end
 
     def value_offset_for_key(key)
