@@ -44,7 +44,7 @@ module LazyTNetstring
     end
 
     def to_s
-      "#<LazyTNetstring::Term:#{object_id} @offset=#{offset.inspect} @value_length=#{value_length.inspect} @value=#{value.inspect}>"
+      "#<LazyTNetstring::Term:#{object_id} @offset=#{offset.inspect}(#{data[offset, 15]}...) @length=#{length.inspect} @value_length=#{value_length.inspect} @value=#{value.inspect}>"
     end
 
     private
@@ -65,10 +65,9 @@ module LazyTNetstring
       result = []
       position = 0
       while position < value_length do
-        element_offset = value_offset_for(raw_value, position)
-        element_length = raw_value[position..(element_offset-2)].to_i
-        result << Term.new(data, @value_offset + position).value
-        position = element_offset + element_length + 1
+        term = Term.new(data, value_offset + position)
+        result << term.value
+        position += term.length
       end
 
       result
