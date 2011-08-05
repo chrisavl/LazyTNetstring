@@ -3,6 +3,8 @@ require 'lazy_tnetstring/exceptions'
 module LazyTNetstring
   class DataAccess
 
+    include LazyTNetstring::Netstring
+
     attr_reader :data, :offset, :value_offset, :value_length, :length, :parent, :children, :scope
 
     def initialize(data, offset=0, length=data.length, parent=nil, scope=nil)
@@ -57,7 +59,7 @@ module LazyTNetstring
 
     def propagate_offset_update
       self.offset = parent.value_offset_for_key(scope) if parent
-      @value_offset = recalculated_value_offset
+      @value_offset = value_offset_for(data, offset)
 
       children.each do |child|
         child.propagate_offset_update
@@ -70,22 +72,16 @@ module LazyTNetstring
         @length += length_delta
         data[offset..(value_offset-2)] = value_length.to_s
         old_value_offset = value_offset
-        @value_offset = recalculated_value_offset
+        @value_offset = value_offset_for(data, offset)
         additional_length_delta = value_offset - old_value_offset
         @length += additional_length_delta
       else
-        @value_offset = recalculated_value_offset
+        @value_offset = value_offset_for(data, offset)
         @value_length = data[offset..(@value_offset-2)].to_i
         additional_length_delta = nil
       end
 
       additional_length_delta
-    end
-
-    def recalculated_value_offset
-      colon_index = data[offset, 10].index(':')
-      raise InvalidTNetString, "no length found in #{data[offset, 10]}..." unless colon_index
-      offset + colon_index + 1
     end
 
     def value_offset_for_key(key)

@@ -4,6 +4,7 @@ module LazyTNetstring
   class Term
 
     autoload :Type, 'lazy_tnetstring/term/type'
+    include LazyTNetstring::Netstring
 
     attr_reader :data, :offset, :length, :value_length, :value_offset, :parent, :scope
 
@@ -62,27 +63,21 @@ module LazyTNetstring
 
     def array_from_raw_value
       result = []
-      offset = 0
-      while colon_index = raw_value[offset, 10].index(':') do
-        element_offset = offset + colon_index + 1
-        element_length = raw_value[offset..(element_offset - 1)].to_i
-        result << Term.new(data, @value_offset + offset).value
-        offset = element_offset + element_length + 1
+      position = 0
+      while position < value_length do
+        element_offset = value_offset_for(raw_value, position)
+        element_length = raw_value[position..(element_offset-2)].to_i
+        result << Term.new(data, @value_offset + position).value
+        position = element_offset + element_length + 1
       end
 
       result
     end
 
     def update_indices_and_length
-      @value_offset = recalculated_value_offset
+      @value_offset = value_offset_for(data, offset)
       @value_length = data[offset..(value_offset-2)].to_i
       @length       = value_length + value_offset + 1
-    end
-
-    def recalculated_value_offset
-      colon_index = data[offset, 10].index(':')
-      raise InvalidTNetString, "no length found in #{data[offset, 10]}..." unless colon_index
-      offset + colon_index + 1
     end
 
   end
