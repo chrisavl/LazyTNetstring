@@ -63,7 +63,7 @@ module LazyTNetstring
     def array_from_raw_value
       result = []
       offset = 0
-      while colon_index = raw_value[offset..-1].index(':') do
+      while colon_index = raw_value[offset, 10].index(':') do
         element_offset = offset + colon_index + 1
         element_length = raw_value[offset..(element_offset - 1)].to_i
         result << Term.new(data, @value_offset + offset).value
