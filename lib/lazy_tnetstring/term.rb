@@ -77,7 +77,7 @@ module LazyTNetstring
     def update_indices_and_length
       @value_offset = value_offset_for(data, offset)
       @value_length = data[offset..(value_offset-2)].to_i
-      @length       = value_length + value_offset + 1
+      @length       = value_offset - offset + value_length + 1
     end
 
   end
