@@ -125,7 +125,7 @@ module LazyTNetstring
     end
 
     def term_following(term)
-      term_at(term.value_offset + term.value_length + 1, term.scope)
+      term_at(term.offset + term.length, term.scope)
     end
 
   end

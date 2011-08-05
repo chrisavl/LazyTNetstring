@@ -55,7 +55,7 @@ module LazyTNetstring
 
     def boolean_from_raw_value
       case raw_value
-      when 'true' then true
+      when 'true'  then true
       when 'false' then false
       else raise InvalidTNetString, "invalid boolean value #{raw_value}"
       end
@@ -66,8 +66,8 @@ module LazyTNetstring
       position = 0
       while position < value_length do
         term = Term.new(data, value_offset + position)
-        result << term.value
         position += term.length
+        result << term.value
       end
 
       result
