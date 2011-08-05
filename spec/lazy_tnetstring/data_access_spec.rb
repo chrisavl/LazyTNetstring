@@ -185,12 +185,6 @@ module LazyTNetstring
                           })}
 
         it 'should update the values in its data and adjust lengths accordingly' do
-          pending
-          # TODO: as the top level data_access does not know anything about its
-          # children yet, access to previously saved scoped data_accesses fails.
-          # We would need to keep track of children and update their offsets
-          # accordingly when a parent structure changes.
-
           scoped_data_access = data_access['outer']
           data_access['key1'] = new_value
           scoped_data_access['key1'] = new_value

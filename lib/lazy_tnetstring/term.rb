@@ -5,13 +5,13 @@ module LazyTNetstring
 
     autoload :Type, 'lazy_tnetstring/term/type'
 
-    attr_reader :data, :offset, :length, :value_length, :value_offset, :scope_chain, :scope
+    attr_reader :data, :offset, :length, :value_length, :value_offset, :parents, :scope
 
-    def initialize(data, offset, scope_chain=[], scope=nil)
-      @data           = data
-      @offset         = offset
-      @scope_chain    = scope_chain
-      @scope          = scope
+    def initialize(data, offset, parents=[], scope=nil)
+      @data    = data
+      @offset  = offset
+      @parents = parents
+      @scope   = scope
       update_indices_and_length
     end
 
@@ -22,7 +22,11 @@ module LazyTNetstring
       when Type::BOOLEAN    then boolean_from_raw_value
       when Type::NULL       then nil
       when Type::LIST       then array_from_raw_value
-      when Type::DICTIONARY then LazyTNetstring::DataAccess.new(data, offset, value_offset-offset+value_length+1, scope_chain.dup, scope)
+      when Type::DICTIONARY then
+        parent = parents.first
+        da = LazyTNetstring::DataAccess.new(data, offset, value_offset-offset+value_length+1, parents.dup, scope)
+        parent.add_child(da) if parent
+        da
       else
         raise InvalidTNetString, "unknown term type #{type_id}"
       end

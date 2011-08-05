@@ -3,18 +3,19 @@ require 'lazy_tnetstring/exceptions'
 module LazyTNetstring
   class DataAccess
 
-    attr_reader :data, :offset, :value_offset, :value_length, :length, :scope_chain, :scope
+    attr_reader :data, :offset, :value_offset, :value_length, :length, :parents, :children, :scope
 
-    def initialize(data, offset=0, length=data.length, scope_chain=nil, scope=nil)
+    def initialize(data, offset=0, length=data.length, parents=nil, scope=nil)
       raise UnsupportedTopLevelDataStructure, "data is not a Hash: #{data.inspect}" unless data.end_with? Term::Type::DICTIONARY
-      @data        = data
-      @offset      = offset
-      @length      = length
-      @scope_chain = scope_chain
-      @scope_chain ||= [self]
+      @data     = data
+      @offset   = offset
+      @length   = length
+      @parents  = parents
+      @parents ||= [self]
+      @children = []
 
       if scope
-        @scope_chain.unshift(self)
+        @parents.unshift(self)
         @scope = scope
       end
 
@@ -31,33 +32,37 @@ module LazyTNetstring
       old_length = term.length
       term.value = value
       length_delta = term.length - old_length
-      puts "\nupdating all elements in the scope chain"
-      scope_chain.each do |data_access|
+      parents.each do |data_access|
         additional_length_delta = data_access.update_indices_and_length(length_delta)
-        puts "updating indices and length with delta=#{length_delta} for data_access #{data_access}, additional_length_delta=#{additional_length_delta}"
         length_delta += additional_length_delta
       end
 
-      parent = nil
-      scope_chain.reverse.each do |data_access|
-        if data_access.scope && parent
-          puts "adjusting offset of #{data_access} for scope #{scope.inspect} to #{parent.value_offset_for_key(scope)}"
-          data_access.offset = parent.value_offset_for_key(scope)
-          data_access.update_value_offset
-          puts "#{data_access}'s scoped data now starts with #{data_access.scoped_data[0, 20]}..."
-        end
-        parent = data_access
-      end
+      root = parents.last
+      root.propagate_offset_update
+    end
+
+    def add_child(data_access)
+      @children << data_access
     end
 
     def to_s
-      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @length=#{length.inspect} @data=#{data.inspect}(len=#{data.length})>"
+      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @length=#{length.inspect} @data=#{data.inspect}(len=#{data.length}) parents=#{parents.map(&:object_id).inspect}(count=#{parents.size})>"
     end
 
     protected
 
     def scoped_data
       data[offset, length]
+    end
+
+    def propagate_offset_update
+      if parent = parents[1]
+        self.offset = parent.value_offset_for_key(scope)
+      end
+      update_value_offset
+      children.each do |child|
+        child.propagate_offset_update
+      end
     end
 
     def update_indices_and_length(length_delta = nil)
@@ -119,7 +124,7 @@ module LazyTNetstring
     end
 
     def term_at(offset, new_scope)
-      Term.new(data, offset, scope_chain, new_scope)
+      Term.new(data, offset, parents, new_scope)
     rescue InvalidTNetString
       raise KeyNotFoundError
     end
