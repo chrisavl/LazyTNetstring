@@ -3,21 +3,16 @@ require 'lazy_tnetstring/exceptions'
 module LazyTNetstring
   class DataAccess
 
-    attr_reader :data, :offset, :value_offset, :value_length, :length, :parents, :children, :scope
+    attr_reader :data, :offset, :value_offset, :value_length, :length, :parent, :children, :scope
 
-    def initialize(data, offset=0, length=data.length, parents=nil, scope=nil)
+    def initialize(data, offset=0, length=data.length, parent=nil, scope=nil)
       raise UnsupportedTopLevelDataStructure, "data is not a Hash: #{data.inspect}" unless data.end_with? Term::Type::DICTIONARY
       @data     = data
       @offset   = offset
       @length   = length
-      @parents  = parents
-      @parents ||= [self]
+      @parent   = parent
       @children = []
-
-      if scope
-        @parents.unshift(self)
-        @scope = scope
-      end
+      @scope    = scope
 
       update_indices_and_length
     end
@@ -41,7 +36,7 @@ module LazyTNetstring
     end
 
     def to_s
-      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @length=#{length.inspect} @data=#{data.inspect}(len=#{data.length}) parents=#{parents.map(&:object_id).inspect}(count=#{parents.size})> children=#{children.map(&:object_id).inspect}(count=#{children.size})"
+      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @length=#{length.inspect} @data=#{data.inspect}(len=#{data.length}) parent=#{parent.object_id} children=#{children.map(&:object_id).inspect}(count=#{children.size})>"
     end
 
     protected
@@ -127,17 +122,13 @@ module LazyTNetstring
     end
 
     def term_at(offset, new_scope)
-      Term.new(data, offset, parents, new_scope)
+      Term.new(data, offset, self, new_scope)
     rescue InvalidTNetString
       raise KeyNotFoundError
     end
 
     def term_following(term)
       term_at(term.value_offset + term.value_length + 1, term.scope)
-    end
-
-    def parent
-      parents[1]
     end
 
   end

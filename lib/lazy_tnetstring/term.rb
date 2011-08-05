@@ -5,13 +5,13 @@ module LazyTNetstring
 
     autoload :Type, 'lazy_tnetstring/term/type'
 
-    attr_reader :data, :offset, :length, :value_length, :value_offset, :parents, :scope
+    attr_reader :data, :offset, :length, :value_length, :value_offset, :parent, :scope
 
-    def initialize(data, offset, parents=[], scope=nil)
-      @data    = data
-      @offset  = offset
-      @parents = parents
-      @scope   = scope
+    def initialize(data, offset, parent=nil, scope=nil)
+      @data   = data
+      @offset = offset
+      @parent = parent
+      @scope  = scope
       update_indices_and_length
     end
 
@@ -23,8 +23,7 @@ module LazyTNetstring
       when Type::NULL       then nil
       when Type::LIST       then array_from_raw_value
       when Type::DICTIONARY then
-        parent = parents.first
-        da = LazyTNetstring::DataAccess.new(data, offset, value_offset-offset+value_length+1, parents.dup, scope)
+        da = LazyTNetstring::DataAccess.new(data, offset, value_offset-offset+value_length+1, parent, scope)
         parent.add_child(da) if parent
         da
       else
