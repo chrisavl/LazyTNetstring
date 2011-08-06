@@ -221,6 +221,33 @@ module LazyTNetstring
           subject['outer']['key2'].should == new_value
         end
       end
+
+      context "when updating inner hashes so that references to old keys get invalid" do
+        let(:data)      { TNetstring.dump({
+                            'level1' => {
+                              'level2' => {
+                                'level3' => {'key' => old_value }
+                              }
+                            }
+                          })}
+        let(:new_value) { 'x' * 100 }
+        let(:new_data)  { TNetstring.dump({
+                            'level1' => {
+                              'level2' => {
+                                'newlevel3' => {'key' => new_value }
+                              }
+                            }
+                          })}
+
+        it 'should raise InvalidScope when trying to access removed scopes' do
+          level1 = subject['level1']
+          level2 = level1['level2']
+          level3 = level2['level3']
+          level1['level2'] = { 'newlevel3' => { 'key' => new_value } }
+          subject.data.should == new_data
+          expect { level3['key'] }.to raise_error(LazyTNetstring::InvalidScope)
+        end
+      end
     end
 
   end

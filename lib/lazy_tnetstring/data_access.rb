@@ -10,6 +10,7 @@ module LazyTNetstring
       @parent     = parent
       @children   = []
       @scope      = scope
+      @dangling   = false
       self.offset = offset
       raise UnsupportedTopLevelDataStructure, "data is not a Hash: #{data.inspect}" unless term.type == Term::Type::DICTIONARY
 
@@ -17,11 +18,13 @@ module LazyTNetstring
     end
 
     def [](key)
+      raise LazyTNetstring::InvalidScope if dangling?
       value_term = find_value_term(key)
       value_term.nil? ? value_term : value_term.value
     end
 
     def []=(key, value)
+      raise LazyTNetstring::InvalidScope if dangling?
       value_term = find_value_term(key)
       old_length = value_term.length
       value_term.value = value
@@ -31,14 +34,21 @@ module LazyTNetstring
     end
 
     def scoped_data
+      raise LazyTNetstring::InvalidScope if dangling?
       data[offset, term.length]
     end
 
+    def dangling?
+      !!@dangling
+    end
+
     def to_s
-      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @data=#{data.inspect}(len=#{data.length}) parent=#{parent.object_id} children=#{children.map(&:object_id).inspect}(count=#{children.size})>"
+      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @dangling=#{dangling.inspect} @offset=#{offset.inspect} @data=#{data.inspect}(len=#{data.length}) parent=#{parent.object_id} children=#{children.map(&:object_id).inspect}(count=#{children.size})>"
     end
 
     protected
+
+    attr_writer :dangling
 
     def add_child(data_access)
       @children << data_access
@@ -60,14 +70,21 @@ module LazyTNetstring
       @term = Term.new(data, new_offset, parent, scope)
 
       children.each do |child|
-        child.offset = value_offset_for_key(child.scope)
+        begin
+          child.offset = value_offset_for_key(child.scope)
+        rescue KeyNotFoundError
+          # the scope is no longer valid, it must have been
+          # replaced with new content at a higher level
+          child.dangling = true
+        end
       end
+      children.delete_if(&:dangling?)
     end
 
     private
 
     def value_offset_for_key(key)
-      find_value_term(key).offset
+      term_following(find_key(key)).offset
     end
 
     def find_value_term(key)
