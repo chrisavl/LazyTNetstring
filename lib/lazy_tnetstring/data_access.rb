@@ -6,15 +6,13 @@ module LazyTNetstring
     attr_reader :data, :offset, :term, :parent, :children, :scope
 
     def initialize(data, offset=0, parent=nil, scope=nil)
-      @term     = Term.new(data, offset, parent, scope)
+      @data       = data
+      @parent     = parent
+      @children   = []
+      @scope      = scope
+      self.offset = offset
       raise UnsupportedTopLevelDataStructure, "data is not a Hash: #{data.inspect}" unless term.type == Term::Type::DICTIONARY
-      @data     = data
-      @offset   = offset
-      @parent   = parent
-      @children = []
-      @scope    = scope
 
-      update_indices_and_length
       parent.add_child(self) if parent
     end
 
