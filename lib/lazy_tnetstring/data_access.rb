@@ -27,7 +27,7 @@ module LazyTNetstring
       value_term.value = value
       length_delta = value_term.length - old_length
 
-      propagate_length_update(length_delta)
+      update_tree(length_delta) if length_delta != 0
     end
 
     def to_s
@@ -44,12 +44,14 @@ module LazyTNetstring
       @children << data_access
     end
 
-    def propagate_length_update(length_delta)
-      additional_length_delta = update_indices_and_length(length_delta)
+    def update_tree(length_delta)
+      old_value_offset = term.value_offset
+      term.value_length += length_delta
+      additional_length_delta = term.value_offset - old_value_offset
       if parent
-        parent.propagate_length_update(length_delta + additional_length_delta)
+        parent.update_tree(length_delta + additional_length_delta)
       else
-        self.offset = 0 # reached root, now propagate offset update to all children
+        self.offset = 0 # reached root, now propagate offset update to children
       end
     end
 
@@ -66,18 +68,6 @@ module LazyTNetstring
 
     def value_offset_for_key(key)
       find_value_term(key).offset
-    end
-
-    def update_indices_and_length(length_delta = nil)
-      if length_delta
-        old_value_offset = term.value_offset
-        term.value_length += length_delta
-        additional_length_delta = term.value_offset - old_value_offset
-      else
-        additional_length_delta = nil
-      end
-
-      additional_length_delta
     end
 
     def find_value_term(key)

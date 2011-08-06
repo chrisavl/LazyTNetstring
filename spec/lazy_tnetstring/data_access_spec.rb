@@ -112,6 +112,18 @@ module LazyTNetstring
         end
       end
 
+      context "when changing the a nested key's value without changing the length" do
+        let(:data)      { TNetstring.dump('outer' => {key => old_value}) }
+        let(:new_value) { 'x' * old_value.length }
+        let(:new_data)  { TNetstring.dump('outer' => {key => new_value}) }
+
+        it 'should update the value in its data and adjust lengths accordingly' do
+          data_access['outer'][key] = new_value
+          data_access.data.should == new_data
+          data_access['outer'][key].should == new_value
+        end
+      end
+
       context "when changing multiple values on different levels" do
         let(:data)      { TNetstring.dump(key => old_value, 'outer' => {key => old_value}) }
         let(:new_value) { 'x' * 100 }
