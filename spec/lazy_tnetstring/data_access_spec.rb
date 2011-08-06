@@ -4,7 +4,8 @@ module LazyTNetstring
   describe DataAccess do
 
     describe '#new' do
-      subject { LazyTNetstring::DataAccess.new(data) }
+      subject           { data_access }
+      let(:data_access) { LazyTNetstring::DataAccess.new(data) }
 
       context 'for non-tnetstring compliant data' do
         let(:data) { '12345}' }
@@ -36,6 +37,24 @@ module LazyTNetstring
         it { should be_an LazyTNetstring::DataAccess }
         its(:data)   { should == data }
         its(:offset) { should == 0 }
+      end
+
+      context 'with parent' do
+        let(:parent)      { mock('parent DataAccess') }
+        let(:data)        { TNetstring.dump({}) }
+        let(:data_access) { LazyTNetstring::DataAccess.new(data, 0, parent) }
+
+        it "should add itself to the parent's children" do
+          parent.should_receive(:add_child).with(data_access)
+        end
+      end
+
+      context 'with scope' do
+        let(:scope)       { 'outer-key' }
+        let(:data)        { TNetstring.dump({}) }
+        let(:data_access) { LazyTNetstring::DataAccess.new(data, 0, nil, scope) }
+
+        its(:scope) { should == scope }
       end
     end
 
