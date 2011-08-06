@@ -4,7 +4,6 @@ module LazyTNetstring
   class Term
 
     autoload :Type, 'lazy_tnetstring/term/type'
-    include LazyTNetstring::Netstring
 
     attr_reader :data, :offset, :parent, :scope
 
@@ -21,7 +20,9 @@ module LazyTNetstring
     end
 
     def value_offset
-      value_offset_for(data, offset)
+      colon_index = data[offset, 10].index(':')
+      raise InvalidTNetString, "no length found in #{data[offset, 10]}..." unless colon_index
+      offset + colon_index + 1
     end
 
     def value_length
