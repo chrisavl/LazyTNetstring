@@ -74,8 +74,6 @@ module LazyTNetstring
         term.value_length += length_delta
         additional_length_delta = term.value_offset - old_value_offset
       else
-        # @value_offset = value_offset_for(data, offset)
-        # @value_length = data[offset..(@value_offset-2)].to_i
         additional_length_delta = nil
       end
 
