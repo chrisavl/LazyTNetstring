@@ -130,7 +130,7 @@ module LazyTNetstring
         end
       end
 
-      context "when changing the a nested key's value without changing the length" do
+      context "when changing a nested key's value without changing the length" do
         let(:data)      { TNetstring.dump('outer' => {key => old_value}) }
         let(:new_value) { 'x' * old_value.length }
         let(:new_data)  { TNetstring.dump('outer' => {key => new_value}) }
