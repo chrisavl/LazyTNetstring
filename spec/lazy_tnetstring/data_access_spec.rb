@@ -28,7 +28,6 @@ module LazyTNetstring
         it { should be_an LazyTNetstring::DataAccess }
         its(:data)   { should == data }
         its(:offset) { should == 0 }
-        its(:length) { should == data.length }
       end
 
       context 'for a hash' do
@@ -37,7 +36,6 @@ module LazyTNetstring
         it { should be_an LazyTNetstring::DataAccess }
         its(:data)   { should == data }
         its(:offset) { should == 0 }
-        its(:length) { should == data.length }
       end
     end
 
@@ -98,7 +96,6 @@ module LazyTNetstring
         it 'should update the value in its data and adjust lengths accordingly' do
           subject
           data_access.data.should == new_data
-          data_access.length.should == new_data.length
           data_access[key].should == new_value
         end
       end
@@ -111,7 +108,6 @@ module LazyTNetstring
         it 'should update the value in its data and adjust lengths accordingly' do
           data_access['outer'][key] = new_value
           data_access.data.should == new_data
-          data_access.length.should == new_data.length
           data_access['outer'][key].should == new_value
         end
       end
@@ -125,7 +121,6 @@ module LazyTNetstring
           data_access['outer'][key] = new_value
           data_access[key] = new_value
           data_access.data.should == new_data
-          data_access.length.should == new_data.length
           data_access[key].should == new_value
           data_access['outer'][key].should == new_value
         end
@@ -157,7 +152,6 @@ module LazyTNetstring
           data_access['key1'] = new_value
           data_access['key2'] = new_value
           data_access.data.should == new_data
-          data_access.length.should == new_data.length
           data_access['key1'].should == new_value
           data_access['key2'].should == new_value
           data_access['outer']['key1'].should == new_value
@@ -191,7 +185,6 @@ module LazyTNetstring
           data_access['key2'] = new_value
           scoped_data_access['key2'] = new_value
           data_access.data.should == new_data
-          data_access.length.should == new_data.length
           data_access['key1'].should == new_value
           data_access['key2'].should == new_value
           data_access['outer']['key1'].should == new_value

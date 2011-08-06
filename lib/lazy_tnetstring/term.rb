@@ -6,26 +6,38 @@ module LazyTNetstring
     autoload :Type, 'lazy_tnetstring/term/type'
     include LazyTNetstring::Netstring
 
-    attr_reader :data, :offset, :length, :value_length, :value_offset, :parent, :scope
+    attr_reader :data, :offset, :parent, :scope
 
     def initialize(data, offset, parent=nil, scope=nil)
       @data   = data
       @offset = offset
       @parent = parent
       @scope  = scope
-      update_indices_and_length
+      value_offset # raises InvalidTNetString if offset can not determined
+    end
+
+    def length
+      value_offset - offset + value_length + 1
+    end
+
+    def value_offset
+      value_offset_for(data, offset)
+    end
+
+    def value_length
+      data[offset..(value_offset-2)].to_i
     end
 
     def value
-      case type_id
+      case type
       when Type::STRING     then raw_value
       when Type::INTEGER    then raw_value.to_i
       when Type::BOOLEAN    then boolean_from_raw_value
       when Type::NULL       then nil
       when Type::LIST       then array_from_raw_value
-      when Type::DICTIONARY then LazyTNetstring::DataAccess.new(data, offset, value_offset-offset+value_length+1, parent, scope)
+      when Type::DICTIONARY then LazyTNetstring::DataAccess.new(data, offset, parent, scope)
       else
-        raise InvalidTNetString, "unknown term type #{type_id}"
+        raise InvalidTNetString, "unknown term type #{type}"
       end
     end
 
@@ -37,10 +49,13 @@ module LazyTNetstring
       self.raw_data = TNetstring.dump(new_value)
     end
 
-    def raw_data=(new_raw_data)
-      @data[offset, value_offset-offset+value_length+1] = new_raw_data
-      @raw_value = nil
-      update_indices_and_length
+    def value_length=(new_length)
+      new_length_str = new_length.to_s
+      data[offset..(value_offset-2)] = new_length_str
+    end
+
+    def type
+      data[value_offset + value_length, 1]
     end
 
     def to_s
@@ -49,8 +64,9 @@ module LazyTNetstring
 
     private
 
-    def type_id
-      data[value_offset + value_length, 1]
+    def raw_data=(new_raw_data)
+      @data[offset, length] = new_raw_data
+      @raw_value = nil
     end
 
     def boolean_from_raw_value
@@ -71,12 +87,6 @@ module LazyTNetstring
       end
 
       result
-    end
-
-    def update_indices_and_length
-      @value_offset = value_offset_for(data, offset)
-      @value_length = data[offset..(value_offset-2)].to_i
-      @length       = value_offset - offset + value_length + 1
     end
 
   end

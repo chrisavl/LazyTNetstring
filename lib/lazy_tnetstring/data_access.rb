@@ -3,15 +3,13 @@ require 'lazy_tnetstring/exceptions'
 module LazyTNetstring
   class DataAccess
 
-    include LazyTNetstring::Netstring
+    attr_reader :data, :offset, :term, :parent, :children, :scope
 
-    attr_reader :data, :offset, :value_offset, :value_length, :length, :parent, :children, :scope
-
-    def initialize(data, offset=0, length=data.length, parent=nil, scope=nil)
-      raise UnsupportedTopLevelDataStructure, "data is not a Hash: #{data.inspect}" unless data.end_with? Term::Type::DICTIONARY
+    def initialize(data, offset=0, parent=nil, scope=nil)
+      @term     = Term.new(data, offset, parent, scope)
+      raise UnsupportedTopLevelDataStructure, "data is not a Hash: #{data.inspect}" unless term.type == Term::Type::DICTIONARY
       @data     = data
       @offset   = offset
-      @length   = length
       @parent   = parent
       @children = []
       @scope    = scope
@@ -21,27 +19,27 @@ module LazyTNetstring
     end
 
     def [](key)
-      term = find_value_term(key)
-      term.nil? ? term : term.value
+      value_term = find_value_term(key)
+      value_term.nil? ? value_term : value_term.value
     end
 
     def []=(key, value)
-      term = find_value_term(key)
-      old_length = term.length
-      term.value = value
-      length_delta = term.length - old_length
+      value_term = find_value_term(key)
+      old_length = value_term.length
+      value_term.value = value
+      length_delta = value_term.length - old_length
 
       propagate_length_update(length_delta)
     end
 
     def to_s
-      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @length=#{length.inspect} @data=#{data.inspect}(len=#{data.length}) parent=#{parent.object_id} children=#{children.map(&:object_id).inspect}(count=#{children.size})>"
+      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @offset=#{offset.inspect} @data=#{data.inspect}(len=#{data.length}) parent=#{parent.object_id} children=#{children.map(&:object_id).inspect}(count=#{children.size})>"
     end
 
     protected
 
     def scoped_data
-      data[offset, length]
+      data[offset, term.length]
     end
 
     def add_child(data_access)
@@ -59,40 +57,36 @@ module LazyTNetstring
 
     def propagate_offset_update
       self.offset = parent.value_offset_for_key(scope) if parent
-      @value_offset = value_offset_for(data, offset)
 
       children.each do |child|
         child.propagate_offset_update
       end
     end
 
+    def value_offset_for_key(key)
+      find_value_term(key).offset
+    end
+
+    private
+
+    def offset=(new_offset)
+      @offset = new_offset
+      @term = Term.new(data, new_offset, parent, scope)
+    end
+
     def update_indices_and_length(length_delta = nil)
       if length_delta
-        @value_length += length_delta
-        @length += length_delta
-        data[offset..(value_offset-2)] = value_length.to_s
-        old_value_offset = value_offset
-        @value_offset = value_offset_for(data, offset)
-        additional_length_delta = value_offset - old_value_offset
-        @length += additional_length_delta
+        old_value_offset = term.value_offset
+        term.value_length += length_delta
+        additional_length_delta = term.value_offset - old_value_offset
       else
-        @value_offset = value_offset_for(data, offset)
-        @value_length = data[offset..(@value_offset-2)].to_i
+        # @value_offset = value_offset_for(data, offset)
+        # @value_length = data[offset..(@value_offset-2)].to_i
         additional_length_delta = nil
       end
 
       additional_length_delta
     end
-
-    def value_offset_for_key(key)
-      find_value_term(key).offset
-    end
-
-    def offset=(offset)
-      @offset = offset
-    end
-
-    private
 
     def find_value_term(key)
       begin
@@ -105,17 +99,17 @@ module LazyTNetstring
     end
 
     def find_key(key)
-      term = first_term(key)
-      while term.value != key
-        term = term_following term # skip value
-        term = term_following term # find next key
+      current_term = first_term(key)
+      while current_term.value != key
+        current_term = term_following current_term # skip value
+        current_term = term_following current_term # find next key
       end
 
-      term
+      current_term
     end
 
     def first_term(new_scope)
-      term_at(value_offset, new_scope)
+      term_at(term.value_offset, new_scope)
     end
 
     def term_at(offset, new_scope)

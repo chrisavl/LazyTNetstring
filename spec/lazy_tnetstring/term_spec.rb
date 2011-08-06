@@ -93,5 +93,43 @@ module LazyTNetstring
       end
     end
 
+    describe 'raw_value' do
+      subject { term.raw_value }
+
+      it { should == value }
+    end
+
+    describe 'value=(new_value)' do
+      subject { term }
+      let(:new_value) { 1234567890 }
+      before( :each ) do
+        subject.value = new_value
+      end
+
+      its(:value) { should == new_value }
+      its(:raw_value) { should == new_value.to_s }
+      its(:value_length) { should == 10 }
+      its(:value_offset) { should == 3 }
+      its(:length) { should == TNetstring.dump(new_value).length }
+    end
+
+    describe 'value_length=(new_length)' do
+      subject          { term }
+      let(:data)       { '1:x,' }
+      let(:new_value)  { 'x' * 100 }
+      let(:new_length) { 100 }
+      before( :each ) do
+        subject
+        data[2,1] = new_value
+        subject.value_length = new_length
+      end
+
+      its(:value) { should == new_value }
+      its(:raw_value) { should == new_value }
+      its(:value_length) { should == 100 }
+      its(:value_offset) { should == 4 }
+      its(:length) { should == TNetstring.dump(new_value).length }
+    end
+
   end
 end
