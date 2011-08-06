@@ -51,27 +51,23 @@ module LazyTNetstring
       if parent
         parent.propagate_length_update(length_delta + additional_length_delta)
       else
-        propagate_offset_update # reached root, now propagate offset update to all children
+        self.offset = 0 # reached root, now propagate offset update to all children
       end
     end
-
-    def propagate_offset_update
-      self.offset = parent.value_offset_for_key(scope) if parent
-
-      children.each do |child|
-        child.propagate_offset_update
-      end
-    end
-
-    def value_offset_for_key(key)
-      find_value_term(key).offset
-    end
-
-    private
 
     def offset=(new_offset)
       @offset = new_offset
       @term = Term.new(data, new_offset, parent, scope)
+
+      children.each do |child|
+        child.offset = value_offset_for_key(child.scope)
+      end
+    end
+
+    private
+
+    def value_offset_for_key(key)
+      find_value_term(key).offset
     end
 
     def update_indices_and_length(length_delta = nil)
