@@ -61,7 +61,7 @@ module LazyTNetstring
       if parent
         parent.update_tree(length_delta + additional_length_delta)
       else
-        self.offset = 0 # reached root, now propagate offset update to children
+        self.offset = offset # reached root, now propagate offset update to children
       end
     end
 
