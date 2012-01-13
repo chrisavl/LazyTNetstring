@@ -380,7 +380,7 @@ module LazyTNetstring
         end
       end
 
-      context "when deerementing" do
+      context "when decrementing" do
         let(:data) { TNetstring.dump({key => -123}) }
         let(:key)  { "key" }
 
