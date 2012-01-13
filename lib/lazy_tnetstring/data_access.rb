@@ -51,6 +51,32 @@ module LazyTNetstring
       end
     end
 
+    def increment_value(key)
+      begin
+        key_term = find_key(key)
+      rescue KeyNotFoundError
+        add(key, 0)
+        key_term = find_key(key)
+      end
+
+      value_term = term_following(key_term)
+      value = value_term.value
+      self[key] = value + 1
+    end
+
+    def decrement_value(key)
+      begin
+        key_term = find_key(key)
+      rescue KeyNotFoundError
+        add(key, 0)
+        key_term = find_key(key)
+      end
+
+      value_term = term_following(key_term)
+      value = value_term.value
+      self[key] = value - 1
+    end
+
     def scoped_data
       raise LazyTNetstring::InvalidScope if dangling?
       data[offset, term.length]

@@ -366,5 +366,45 @@ module LazyTNetstring
       end
     end
 
+    describe "incrementing and decrementing" do
+      subject           { data_access }
+      let(:data_access) { LazyTNetstring::DataAccess.new(data) }
+
+      context "when incerementing" do
+        let(:data) { TNetstring.dump({key => -123}) }
+        let(:key)  { "key" }
+
+        it "should increment value by one" do
+          subject.increment_value(key)
+          subject[key].should == -122
+        end
+      end
+
+      context "when deerementing" do
+        let(:data) { TNetstring.dump({key => -123}) }
+        let(:key)  { "key" }
+
+        it "should decrement value by one" do
+          subject.decrement_value(key)
+          subject[key].should == -124
+        end
+      end
+
+      context "when incerementing a non existing key" do
+        let(:data) { TNetstring.dump({}) }
+        let(:key)  { "key" }
+
+        it "should increment value by one" do
+          subject.increment_value(key)
+          subject[key].should == 1
+        end
+
+        it "should decrement value by one" do
+          subject.decrement_value(key)
+          subject[key].should == -1
+        end
+      end
+    end
+
   end
 end
