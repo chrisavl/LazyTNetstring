@@ -59,7 +59,7 @@ module LazyTNetstring
     end
 
     def to_s
-      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @dangling=#{dangling.inspect} @offset=#{offset.inspect} @data=#{data.inspect}(len=#{data.length}) parent=#{parent.object_id} children=#{children.map(&:object_id).inspect}(count=#{children.size})>"
+      "#<LazyTNetstring::DataAccess:#{object_id} @scope=#{scope.inspect} @dangling=#{dangling?.inspect} @offset=#{offset.inspect} @data=#{data.inspect}(len=#{data.length}) parent=#{parent.object_id} children=#{children.map(&:object_id).inspect}(count=#{children.size})>"
     end
 
     protected
