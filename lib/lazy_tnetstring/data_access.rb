@@ -25,12 +25,28 @@ module LazyTNetstring
 
     def []=(key, value)
       raise LazyTNetstring::InvalidScope if dangling?
+      return remove(key) if value.nil?
+
       value_term = find_value_term(key)
       old_length = value_term.length
       value_term.value = value
       length_delta = value_term.length - old_length
 
       update_tree(length_delta) if length_delta != 0
+    end
+
+    def remove(key)
+      begin
+        found_key = find_key(key)
+        found_value = term_following(found_key)
+        del_length = found_key.length + found_value.length
+        del_begin = found_key.offset
+        del_end = del_begin + del_length
+        data[del_begin..(del_end-1)] = ''
+
+        update_tree(-del_length)
+      rescue KeyNotFoundError
+      end
     end
 
     def scoped_data

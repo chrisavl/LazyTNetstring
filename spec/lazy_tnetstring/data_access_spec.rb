@@ -248,6 +248,97 @@ module LazyTNetstring
           expect { level3['key'] }.to raise_error(LazyTNetstring::InvalidScope)
         end
       end
+
+      context "when updating a key to nil" do
+        let(:empty)     { TNetstring.dump({}) }
+
+        it "should remove the key" do
+          subject[key] = nil
+          subject.data.should == empty
+        end
+      end
+    end
+
+    describe "#remove" do
+      subject           { data_access }
+      let(:data_access) { LazyTNetstring::DataAccess.new(data) }
+
+      context "when removing terms" do
+        let(:empty)     { TNetstring.dump({}) }
+        let(:data)      { TNetstring.dump({ key => value }) }
+        let(:key)       { 'key' }
+        let(:value)     { 'value' }
+
+        it "should do nothing if key doesn't exist" do
+          subject.remove('non_existing_key')
+          subject.data.should == data
+        end
+        it "should decrease the parents length" do
+          subject.remove(key)
+          subject.data.should == empty
+        end
+      end
+
+      context "when removing keys present in different scopes" do
+        let(:data)        { TNetstring.dump({
+                              'key' => 'value',
+                              'key2' => {
+                                'key' => 'value',
+                                'key2' => 'value2'
+                              }
+                            })}
+        let(:data_inner)  { TNetstring.dump({
+                              'key2' => {
+                                'key' => 'value',
+                                'key2' => 'value2'
+                              }
+                            })}
+        let(:data_outer)  { TNetstring.dump({
+                              'key' => 'value',
+                              'key2' => {
+                                'key2' => 'value2'
+                              }
+                            })}
+        it "should not remove the inner key" do
+          subject.remove('key')
+          subject.data.should == data_inner
+        end
+        it "should not remove the outer key" do
+          subject['key2'].remove('key')
+          subject.data.should == data_outer
+        end
+      end
+
+      context "when removing terms larger data stores" do
+        let(:data)      { TNetstring.dump({ 'key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3' }) }
+        let(:new_data)  { TNetstring.dump({ 'key1' => 'value1', 'key3' => 'value3' }) }
+
+        it "should remove the part of TNetstring from the data store" do
+          subject.remove('key2')
+          subject.data.should == new_data
+        end
+      end
+
+      context "when removing terms nested data stores" do
+        let(:data)      { TNetstring.dump({
+                            'level1' => {
+                              'level2' => {
+                                'level3' => {'key' => 'value' }
+                              }
+                            }
+                          })}
+        let(:new_data)  { TNetstring.dump({
+                            'level1' => {
+                              'level2' => {
+                                'level3' => { }
+                              }
+                            }
+                          })}
+        it "should update all parent lengths" do
+          subject['level1']['level2']['level3'].remove('key')
+          subject.data.should == new_data
+        end
+      end
     end
 
   end
