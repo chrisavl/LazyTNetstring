@@ -257,6 +257,31 @@ module LazyTNetstring
           subject.data.should == empty
         end
       end
+
+      context "when updating a non-existing key to an empty hash" do
+        let(:data)      { TNetstring.dump({}) }
+        let(:key)       { 'key' }
+        let(:value)     { 'value' }
+        let(:new_data)  { TNetstring.dump({ key => value }) }
+
+        it "should add a new key value pair" do
+          subject[key] = value
+          subject.data[0..1].should == "14"
+          subject.data.should == new_data
+        end
+      end
+
+      context "when updating a non-existing key to a non-empty hash" do
+        let(:data)      { TNetstring.dump({ 'some-key' => 'some-value' }) }
+        let(:key)       { 'key' }
+        let(:value)     { 'value' }
+        let(:new_data)  { TNetstring.dump({ 'some-key' => 'some-value', key => value }) }
+
+        it "should add a new key at the end of the data store" do
+          subject[key] = value
+          subject.data.should == new_data
+        end
+      end
     end
 
     describe "#remove" do

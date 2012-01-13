@@ -28,6 +28,8 @@ module LazyTNetstring
       return remove(key) if value.nil?
 
       value_term = find_value_term(key)
+      return add(key, value) if value_term.nil?
+
       old_length = value_term.length
       value_term.value = value
       length_delta = value_term.length - old_length
@@ -98,6 +100,18 @@ module LazyTNetstring
     end
 
     private
+
+    def add(key, value)
+        key_term = TNetstring.dump(key)
+        key_offset = term.offset + term.length - 1
+        data.insert(key_offset, key_term)
+
+        value_term = TNetstring.dump(value)
+        value_offset = key_offset + key_term.length
+        data.insert(value_offset, value_term)
+
+        update_tree(key_term.length + value_term.length)
+    end
 
     def value_offset_for_key(key)
       term_following(find_key(key)).offset
