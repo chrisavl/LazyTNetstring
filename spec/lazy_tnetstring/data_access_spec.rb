@@ -43,7 +43,7 @@ module LazyTNetstring
         let(:parent)      { mock('parent DataAccess') }
         let(:term)        { mock('parent as Term') }
         let(:data)        { TNetstring.dump({}) }
-        let(:data_access) { LazyTNetstring::DataAccess.new(data, 0, parent) }
+        let(:data_access) { LazyTNetstring::DataAccess.new(data, { :parent => parent } ) }
 
         it "should add itself to the parent's children" do
           parent.stub(:term).and_return(term)
@@ -57,7 +57,7 @@ module LazyTNetstring
       context 'with scope' do
         let(:scope)       { 'outer-key' }
         let(:data)        { TNetstring.dump({}) }
-        let(:data_access) { LazyTNetstring::DataAccess.new(data, 0, nil, scope) }
+        let(:data_access) { LazyTNetstring::DataAccess.new(data, { :scope => scope }) }
 
         its(:scope) { should == scope }
       end
@@ -417,6 +417,55 @@ module LazyTNetstring
         it "should decrement value by one" do
           subject.decrement_value(key)
           subject[key].should == -1
+        end
+      end
+    end
+
+    describe "key mapping scheme" do
+      subject           { data_access }
+      let(:data_access) { LazyTNetstring::DataAccess.new(data, { :key_mapping => mapping } ) }
+
+      context "when updating" do
+        let(:data)     { TNetstring.dump({ "f" => "bar"}) }
+        let(:new_data) { TNetstring.dump({ "f" => "baz"}) }
+        let(:mapping)  { { "foo" => "f" } }
+
+        it "should change the existing value for the mapped key" do
+          subject['foo'] = "baz"
+          subject.data.should == new_data
+        end
+      end
+
+      context "when adding" do
+        let(:data)     { TNetstring.dump({})}
+        let(:new_data) { TNetstring.dump({ "f" => "bar"}) }
+        let(:mapping)  { { "foo" => "f" } }
+
+        it "should add the smaller key" do
+          subject['foo'] = "bar"
+          subject.data.should == new_data
+        end
+      end
+
+      context "when removing" do
+        let(:data)     { TNetstring.dump({ "f" => "bar"}) }
+        let(:new_data) { TNetstring.dump({}) }
+        let(:mapping)  { { "foo" => "f" } }
+
+        it "should remove the smaller key" do
+          subject.remove('foo')
+          subject.data.should == new_data
+        end
+      end
+
+      context "when updating a nested hash" do
+        let(:data)     { TNetstring.dump({ "outer" => { "f" => "bar" } }) }
+        let(:new_data) { TNetstring.dump({ "outer" => { "f" => "baz" } }) }
+        let(:mapping)  { { "foo" => "f" } }
+
+        it "should change the exiting value for the smaller key" do
+          subject[ "outer" ][ "foo" ] = "baz"
+          subject.data.should == new_data
         end
       end
     end

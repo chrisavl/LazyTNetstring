@@ -3,27 +3,32 @@ require 'lazy_tnetstring/exceptions'
 module LazyTNetstring
   class DataAccess
 
-    attr_reader :data, :offset, :term, :parent, :children, :scope
+    attr_reader :data, :offset, :term, :parent, :children, :scope, :key_mapping
 
-    def initialize(data, offset=0, parent=nil, scope=nil)
-      @data       = data
-      @parent     = parent
-      @children   = []
-      @scope      = scope
-      @dangling   = false
-      self.offset = offset
+    #def initialize(data, offset=0, parent=nil, scope=nil, key_mapping=nil)
+    def initialize(data, options = {} )
+      @data         = data
+      @parent       = options[:parent]
+      @children     = []
+      @scope        = options[:scope]
+      @dangling     = false
+      @key_mapping  = options[:key_mapping] || {}
+      self.offset   = options[:offset] || 0
+
       raise UnsupportedTopLevelDataStructure, "data is not a Hash: #{data.inspect}" unless term.type == Term::Type::DICTIONARY
 
       parent.add_child(self) if parent
     end
 
     def [](key)
+      key = key_mapping[key] || key
       raise LazyTNetstring::InvalidScope if dangling?
       value_term = find_value_term(key)
       value_term.nil? ? value_term : value_term.value
     end
 
     def []=(key, value)
+      key = key_mapping[key] || key
       raise LazyTNetstring::InvalidScope if dangling?
       return remove(key) if value.nil?
 
@@ -38,6 +43,7 @@ module LazyTNetstring
     end
 
     def remove(key)
+      key = key_mapping[key] || key
       begin
         found_key = find_key(key)
         found_value = term_following(found_key)
@@ -52,6 +58,7 @@ module LazyTNetstring
     end
 
     def increment_value(key)
+      key = key_mapping[key] || key
       begin
         key_term = find_key(key)
       rescue KeyNotFoundError
@@ -65,6 +72,7 @@ module LazyTNetstring
     end
 
     def decrement_value(key)
+      key = key_mapping[key] || key
       begin
         key_term = find_key(key)
       rescue KeyNotFoundError

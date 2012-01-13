@@ -83,7 +83,14 @@ module LazyTNetstring
       when Type::BOOLEAN    then boolean_from_raw_value
       when Type::NULL       then nil
       when Type::LIST       then array_from_raw_value
-      when Type::DICTIONARY then LazyTNetstring::DataAccess.new(data, offset, parent, scope)
+      when Type::DICTIONARY then LazyTNetstring::DataAccess.new(
+                                  data,
+                                  {
+                                    :offset => offset,
+                                    :parent => parent,
+                                    :scope => scope,
+                                    :key_mapping => parent.nil? ? nil : parent.key_mapping
+                                  })
       else
         raise InvalidTNetString, "unknown term type #{type}"
       end
