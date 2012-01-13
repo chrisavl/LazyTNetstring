@@ -41,10 +41,15 @@ module LazyTNetstring
 
       context 'with parent' do
         let(:parent)      { mock('parent DataAccess') }
+        let(:term)        { mock('parent as Term') }
         let(:data)        { TNetstring.dump({}) }
         let(:data_access) { LazyTNetstring::DataAccess.new(data, 0, parent) }
 
         it "should add itself to the parent's children" do
+          parent.stub(:term).and_return(term)
+          term.stub(:offset).and_return(0)
+          term.stub(:length).and_return(data.length)
+
           parent.should_receive(:add_child).with(data_access)
         end
       end
@@ -86,6 +91,16 @@ module LazyTNetstring
 
         it 'should provide access to the inner hash' do
           subject['inner'].should == 'value'
+        end
+      end
+
+      context 'for nested hash with non-existing key' do
+        let(:data)              { TNetstring.dump({'outer' => { 'inner' => 'value'}, 'user' => {} }) }
+        let(:key)               { 'outer' }
+        let(:non_existing_key)  { 'non_existing_key' }
+
+        it 'should not find a value and terminate search' do
+          subject[non_existing_key].should be_nil
         end
       end
     end

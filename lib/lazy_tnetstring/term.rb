@@ -59,7 +59,12 @@ module LazyTNetstring
     def calculated_value_offset
       colon_index = data[offset, 10].index(':')
       raise InvalidTNetString, "no length found in #{data[offset, 10]}..." unless colon_index
-      offset + colon_index + 1
+      calculated_offset = offset + colon_index + 1
+      if !parent.nil?
+        parent_end = parent.term.offset + parent.term.length - 1
+        raise InvalidTNetString, "not inside scope (#{scope})" if calculated_offset > parent_end
+      end
+      calculated_offset
     end
 
     def raw_data=(new_raw_data)
