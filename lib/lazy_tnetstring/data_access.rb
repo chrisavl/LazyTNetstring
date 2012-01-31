@@ -182,6 +182,7 @@ module LazyTNetstring
     end
 
     def term_following(term)
+      raise KeyNotFoundError if term.offset + term.length >= self.term.offset + self.term.length - 1
       term_at(term.offset + term.length, term.scope)
     end
 

@@ -297,6 +297,19 @@ module LazyTNetstring
           subject.data.should == new_data
         end
       end
+
+      context "when updating a key in a nested hash with a long value" do
+        let(:data)      { TNetstring.dump({ 'nested' => { key => '' } }) }
+        let(:key)       { 'key' }
+        let(:value)     { 'x' * 100 }
+        let(:new_data)  { TNetstring.dump({ 'nested' => { key => value } }) }
+
+        it "should update the key in the nested hash" do
+          subject['nested'] = {}
+          subject['nested'][key] = value
+          subject.data.should == new_data
+        end
+      end
     end
 
     describe "#remove" do
